@@ -15,6 +15,8 @@
 - Q: Which Android application ID should FridgeIt use? → A: `com.kavinkodikara.fridgeit`
 - Q: Should 001 set up end-to-end device tests, and run them automatically? → A: Yes, one flow
   (launch shows "My food"), run locally on the emulator only.
+- Q: Should new preview builds be started by hand, on every merge, or only when needed? → A:
+  Automatically on merge, only when the native runtime changed; otherwise publish an update.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -47,9 +49,12 @@ appears with no reinstall.
    current version meanwhile.
 3. **Given** the update has finished downloading, **When** the user restarts the app (from the
    prompt in Story 2, or by closing and reopening it), **Then** the changed text is shown.
-4. **Given** a merged change alters the app's native runtime, **When** it is published, **Then**
-   installed builds with a different native runtime do not receive it, and keep working on
-   their current version.
+4. **Given** a merged change alters the app's native runtime, **When** it is merged, **Then**
+   a new preview build starts automatically instead of an update being published, and
+   installed builds with the old native runtime keep working on their current version.
+5. **Given** a new preview build has finished, **When** the developer looks at the build
+   service, **Then** a download link for the new installable file is available, and installing
+   it brings the phone back onto the preview update stream.
 
 ---
 
@@ -173,9 +178,15 @@ install the preview build on a phone by downloading the file directly.
   rather than staying broken.
 - **Two changes merged in quick succession**: the phone ends up on the latest one; it never
   regresses to the older update.
-- **Native change merged**: builds with the old native runtime never receive the incompatible
-  update (Story 1, scenario 4); the change needs a new build, and the change description must
-  say so (constitution, principle VII).
+- **Native change merged**: a new preview build starts automatically and no update is
+  published for the new runtime until that build exists; builds with the old native runtime
+  never receive the incompatible change (Story 1, scenario 4). The change description must
+  still say it needs a new build (constitution, principle VII).
+- **Automatic build fails** (for example, the free-tier build quota is used up): the failure is
+  visible on the merge's pipeline run, installed phones stay on their current version, and the
+  build can be re-run without a new commit.
+- **Native and JS changes merged together**: treated as a native change; one new build carries
+  both.
 - **Check pipeline fails for infrastructure reasons** (not code): the change stays blocked, and
   the check can be re-run without new commits.
 - **Restart tapped while the user is mid-action**: acceptable for this feature, since the
@@ -205,9 +216,13 @@ install the preview build on a phone by downloading the file directly.
 
 **Releases**
 
-- **FR-009**: Merging a change into the main line MUST automatically publish an update to the
-  preview audience.
-- **FR-010**: Promoting an update to the production audience MUST be a separate, manual step.
+- **FR-009**: Merging a change into the main line MUST automatically do exactly one of these:
+  if a preview build already exists for the change's native runtime, publish an update to the
+  preview audience; otherwise, start a new preview build for that runtime.
+- **FR-009a**: The pipeline MUST NOT start a preview build when a preview build with the same
+  native runtime already exists.
+- **FR-010**: Production builds and promoting an update to the production audience MUST be
+  separate, manual steps.
 - **FR-011**: Each build MUST only accept updates made for the same native runtime; a change to
   the native runtime MUST produce a distinct runtime identity automatically, with no manual
   version bump.
@@ -256,7 +271,10 @@ install the preview build on a phone by downloading the file directly.
 
 - **SC-001**: A visible text change merged to the main line appears on an installed preview
   build within 15 minutes of merging, after at most two app restarts, with zero reinstalls.
-- **SC-002**: The developer spends zero manual steps publishing a preview update after merging.
+- **SC-002**: After merging, the developer spends zero manual steps either publishing a preview
+  update or starting a preview build; the only manual step after a native change is installing
+  the new file on the phone.
+- **SC-002a**: Merges that don't change the native runtime start zero builds.
 - **SC-003**: 100% of proposed changes run the automatic checks, and a change with a type error,
   lint error, formatting error or failing test cannot be merged.
 - **SC-004**: The automatic checks finish in under 10 minutes for a typical change.
@@ -273,8 +291,10 @@ install the preview build on a phone by downloading the file directly.
   The spec describes outcomes; the plan names the tools.
 - **Who installs**: the preview build is side-loaded by a small number of known testers (the
   developer and family); no app store listing is part of this feature.
-- **Building the preview APK** is a manual step the developer triggers; only update publishing
-  is automatic on merge. Automating native builds is out of scope.
+- **Installing** a new preview build on the phone stays manual (download and side-load), since
+  there is no app store; only the decision to build, and the build itself, are automatic. The
+  very first preview build may be started by hand, because there is no earlier build to compare
+  against.
 - **Production** builds and promotion are defined but not exercised; the "done when" condition
   only uses the preview path.
 - **Hosting**: the code is hosted on GitHub, and the developer has an Expo account with EAS
