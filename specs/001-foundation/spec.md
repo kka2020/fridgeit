@@ -18,6 +18,17 @@
 - Q: Should new preview builds be started by hand, on every merge, or only when needed? → A:
   Automatically on merge, only when the native runtime changed; otherwise publish an update.
 
+### Session 2026-10-13
+
+- Q: Should the app also check for updates each time it returns to the foreground? → A: Yes:
+  on cold start and on return to the foreground, at most once every 15 minutes.
+- Q: Must every change to `main` go through a pull request? → A: Yes, and checks must pass;
+  the repo admin can bypass in an emergency.
+- Q: When typecheck or tests fail at the end of an agent turn, should hand-over be blocked? →
+  A: Block, up to 3 attempts per turn, then hand over with the failures reported.
+- Q: Should the "Update ready" message have a dismiss button, and when does it come back? → A:
+  Yes; dismissing hides it for the rest of the session, and the update applies on next cold start.
+
 ## User Scenarios & Testing *(mandatory)*
 
 This feature has two kinds of user: the **phone user**, who installs and runs FridgeIt, and
@@ -45,7 +56,7 @@ appears with no reinstall.
    the "My food" screen is merged to the main line, **Then** an update is published to the
    preview audience automatically, with no manual publish step.
 2. **Given** an update has been published to the preview audience, **When** the user opens the
-   app, **Then** the app downloads the update in the background and the user can keep using the
+   app or brings it back to the foreground (at least 15 minutes after the last check), **Then** the app downloads the update in the background and the user can keep using the
    current version meanwhile.
 3. **Given** the update has finished downloading, **When** the user restarts the app (from the
    prompt in Story 2, or by closing and reopening it), **Then** the changed text is shown.
@@ -80,8 +91,11 @@ pending, confirm no prompt appears.
    rest of the screen.
 3. **Given** the prompt is shown, **When** the user taps "Restart", **Then** the app reloads
    and runs the new version.
-4. **Given** the prompt is shown, **When** the user ignores or dismisses it, **Then** the app
-   keeps working, and the update applies on the next cold start.
+4. **Given** the prompt is shown, **When** the user taps its dismiss button, **Then** the
+   prompt is hidden for the rest of the session, including after returning to the foreground,
+   and the update applies on the next cold start.
+5. **Given** the prompt is shown, **When** the user ignores it, **Then** the app keeps working
+   normally, and the update applies on the next cold start.
 
 ---
 
@@ -136,7 +150,9 @@ edit a file with bad formatting and confirm it is reformatted on save.
 4. **Given** a coding agent edits a source file, **When** the edit is saved, **Then** the file
    is formatted and linted automatically, and any lint errors are reported back to the agent.
 5. **Given** a coding agent finishes a turn, **When** it stops, **Then** typecheck and tests
-   run, and failures are reported back to the agent before it hands over.
+   run, and if they fail the agent is sent back to fix them before it can hand over.
+6. **Given** the agent has been sent back 3 times in one turn and checks still fail, **When** it
+   stops again, **Then** it hands over, and the remaining failures are reported to the developer.
 
 ---
 
@@ -202,17 +218,23 @@ install the preview build on a phone by downloading the file directly.
   the only screen.
 - **FR-002**: All starter-template screens, tabs, components and assets that the app no longer
   uses MUST be removed.
-- **FR-003**: The app MUST check for updates in the background on launch, without delaying
-  startup or blocking use while it checks or downloads.
+- **FR-003**: The app MUST check for updates in the background on cold start and whenever it
+  returns to the foreground, without delaying startup or blocking use while it checks or
+  downloads.
+- **FR-003a**: Foreground checks MUST happen at most once every 15 minutes; returning to the
+  foreground sooner than that after the last check MUST NOT start a new check.
 - **FR-004**: When a downloaded update is pending, the app MUST show an "Update ready" message
   with a "Restart" action that applies the update immediately.
 - **FR-005**: The update message MUST NOT be shown when no update is pending, and MUST NOT block
   the rest of the screen.
+- **FR-005a**: The update message MUST have a dismiss action. Once dismissed, it MUST stay hidden
+  for the rest of the session (until the next cold start), even if the app returns to the
+  foreground or another update downloads.
 - **FR-006**: A pending update that the user does not apply MUST apply on the next cold start.
 - **FR-007**: The app MUST work fully with no network connection; update checks MUST fail
   silently.
-- **FR-008**: The "Restart" action MUST have an accessibility label and a touch target of at
-  least 48dp.
+- **FR-008**: The "Restart" and dismiss actions MUST each have an accessibility label and a
+  touch target of at least 48dp.
 
 **Releases**
 
@@ -238,8 +260,13 @@ install the preview build on a phone by downloading the file directly.
   check and tests, and they MUST pass on the finished feature.
 - **FR-016**: Typecheck, lint, the format check and tests MUST run automatically on every
   proposed change and every push to the main line, and a failure MUST block merging.
+- **FR-016a**: Changes MUST reach the main line only through a proposed change (pull
+  request) whose checks have passed (no approving review is required, since there is one
+  developer); direct pushes to the main line MUST be rejected. Only the
+  repository admin MAY bypass this, for emergencies such as a broken check pipeline.
 - **FR-017**: The "My food" screen and the update prompt MUST have automated UI tests covering
-  their key states (placeholder shown; prompt hidden, prompt shown, restart triggered).
+  their key states (placeholder shown; prompt hidden, prompt shown, restart triggered, prompt
+  dismissed and staying hidden).
 - **FR-018**: The update prompt's logic MUST be testable without a real update service.
 - **FR-019**: The feature MUST include one end-to-end device test of its primary journey:
   launch the app and see the "My food" screen. It runs locally on the Android emulator with a
@@ -249,8 +276,9 @@ install the preview build on a phone by downloading the file directly.
 
 - **FR-020**: When a coding agent edits a source file, the file MUST be formatted and linted
   automatically, with lint errors reported back to the agent.
-- **FR-021**: When a coding agent finishes a turn, typecheck and tests MUST run, with failures
-  reported back to the agent.
+- **FR-021**: When a coding agent finishes a turn, typecheck and tests MUST run. If either
+  fails, the agent MUST be sent back to fix it instead of handing over, up to 3 attempts per
+  turn; after the third failed attempt it MUST hand over with the failures clearly reported.
 - **FR-022**: `CLAUDE.md` MUST be updated with any new or changed commands, and
   `docs/roadmap.md` MUST mark feature 001 as done in the feature's change.
 
@@ -299,10 +327,13 @@ install the preview build on a phone by downloading the file directly.
   only uses the preview path.
 - **Hosting**: the code is hosted on GitHub, and the developer has an Expo account with EAS
   access on the free tier.
-- **Branch protection**: blocking merges on failing checks is configured in the repository host
-  settings by the developer; the feature documents the required checks.
-- **Update check timing**: the default "check on launch, apply on next launch" behaviour is
-  used, plus the in-app prompt. That is why SC-001 allows up to two restarts.
+- **Branch protection**: the main-line rules (FR-016, FR-016a) are configured in the repository
+  host settings once the check workflow has run at least once; the feature documents the
+  required checks and settings. The repository is public, so these rules work on the free plan.
+- **Update check timing**: updates are checked on cold start and on return to the foreground
+  (rate-limited, FR-003a), and a downloaded update applies via the in-app prompt or on the next
+  cold start. SC-001 allows up to two restarts to cover an update that finishes downloading
+  after the prompt was missed.
 - **Network**: update checks and downloads are the only network traffic, as the constitution
   allows; no analytics or crash reporting are added.
 - **End-to-end tests** run locally only for now. Running them automatically (in CI or the
