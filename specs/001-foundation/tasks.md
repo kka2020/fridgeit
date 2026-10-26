@@ -46,15 +46,15 @@ Add dependencies only with `npx expo install` (on Windows, put `"--"` before `--
 **Purpose**: formatting, the test runner and the npm scripts that every later phase uses
 (R6, R7, contracts/pipelines.md).
 
-- [ ] T001 Install the dev dependencies listed in plan.md: `npx expo install prettier eslint-config-prettier eslint-plugin-prettier jest-expo jest @types/jest @testing-library/react-native "--" --dev`. Confirm `package.json` and `package-lock.json` changed, and nothing outside plan.md's list was added.
-- [ ] T002 [P] Add `.prettierrc` (`{ "printWidth": 100 }`) and `.prettierignore` listing `.specify/`, `.claude/skills/`, `specs/`, `docs/`, `package-lock.json`, `android/`, `ios/`, `.expo/`, `dist/`, `node_modules/`, at the repo root.
-- [ ] T003 [P] Add `eslint-plugin-prettier/recommended` to `eslint.config.js` after `expoConfig`, as research R6 shows. Add a block for `.claude/hooks/**/*.mjs` with `languageOptions: { sourceType: "module", globals: { process: "readonly", console: "readonly", Buffer: "readonly" } }`, listing only the Node globals the hooks use, so the hook scripts lint cleanly with no new dependency.
-- [ ] T004 Update the `package.json` scripts to match contracts/pipelines.md:
+- [X] T001 Install the dev dependencies listed in plan.md: `npx expo install prettier eslint-config-prettier eslint-plugin-prettier jest-expo jest @types/jest @testing-library/react-native "--" --dev`. Confirm `package.json` and `package-lock.json` changed, and nothing outside plan.md's list was added.
+- [X] T002 [P] Add `.prettierrc` (`{ "printWidth": 100 }`) and `.prettierignore` listing `.specify/`, `.claude/skills/`, `specs/`, `docs/`, `package-lock.json`, `android/`, `ios/`, `.expo/`, `dist/`, `node_modules/`, at the repo root.
+- [X] T003 [P] Add `eslint-plugin-prettier/recommended` to `eslint.config.js` after `expoConfig`, as research R6 shows. Add a block for `.claude/hooks/**/*.mjs` with `languageOptions: { sourceType: "module", globals: { process: "readonly", console: "readonly", Buffer: "readonly" } }`, listing only the Node globals the hooks use, so the hook scripts lint cleanly with no new dependency.
+- [X] T004 Update the `package.json` scripts to match contracts/pipelines.md:
   - Add `typecheck` (`tsc --noEmit`), `format` (`prettier --write .`), `format:check` (`prettier --check .`), `test` (`jest`) and `e2e` (`maestro test .maestro`).
   - Keep `lint`, `start`, `android`, `ios` and `web`. Remove `reset-project`.
   - Add a `jest` block: `preset: "jest-expo"`, `moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" }`, `testPathIgnorePatterns: ["/node_modules/", "/.maestro/"]`, `passWithNoTests: true` (temporary, removed in T026, so CI and the Stop hook pass before the first test exists).
-- [ ] T005 Add `"types": ["jest"]` to `compilerOptions` in `tsconfig.json`. Then run `npm run format` once to normalise existing files, and confirm `npm run typecheck`, `npm run lint` and `npm run format:check` pass. `npm test` passes because of `passWithNoTests` (removed in T026).
-- [ ] T006 Commit: `chore(001): add Prettier, Jest and RNTL with typecheck/format/test scripts`.
+- [X] T005 Add `"types": ["jest"]` to `compilerOptions` in `tsconfig.json`. Then run `npm run format` once to normalise existing files, and confirm `npm run typecheck`, `npm run lint` and `npm run format:check` pass. `npm test` passes because of `passWithNoTests` (removed in T026).
+- [X] T006 Commit: `chore(001): add Prettier, Jest and RNTL with typecheck/format/test scripts`.
 
 ---
 
