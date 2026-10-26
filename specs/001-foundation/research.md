@@ -207,14 +207,15 @@ the same in Git Bash, PowerShell and CI.
   and `.mjs` files, it runs `eslint --fix`. Remaining lint errors exit with code 2, sending stderr
   to Claude, which doesn't block.
 - **`Stop`** runs `check-on-stop.mjs`:
-  - Skip (exit 0) when `git status --porcelain` shows no changed code files.
+  - Skip (exit 0) when `git status --porcelain` shows no changed code files and `HEAD` is the
+    commit of the last passing run, so commits made during a turn are still checked.
   - Otherwise, run `npm run typecheck` and `npm test -- --silent`.
   - On failure, keep an attempt count per `session_id` in `os.tmpdir()`. The count resets when
     `stop_hook_active` is `false`, which means a new turn. For failures 1 to 3, exit with code 2
     and the failure output, which blocks hand-over and sends the agent back. On the fourth
     failure, after it has been sent back 3 times, exit 0 and print `{"systemMessage": …}`
     reporting the failures to the developer (spec, Story 4, scenario 6).
-  - On success, clear the count.
+  - On success, clear the count and save `HEAD` as the last passing commit.
 
 **Rationale**:
 - Exit code 2 on Stop blocks stopping and sends the reason to Claude. On PostToolUse, it only

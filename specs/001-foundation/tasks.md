@@ -48,12 +48,12 @@ Add dependencies only with `npx expo install` (on Windows, put `"--"` before `--
 
 - [ ] T001 Install the dev dependencies listed in plan.md: `npx expo install prettier eslint-config-prettier eslint-plugin-prettier jest-expo jest @types/jest @testing-library/react-native "--" --dev`. Confirm `package.json` and `package-lock.json` changed, and nothing outside plan.md's list was added.
 - [ ] T002 [P] Add `.prettierrc` (`{ "printWidth": 100 }`) and `.prettierignore` listing `.specify/`, `.claude/skills/`, `specs/`, `docs/`, `package-lock.json`, `android/`, `ios/`, `.expo/`, `dist/`, `node_modules/`, at the repo root.
-- [ ] T003 [P] Add `eslint-plugin-prettier/recommended` to `eslint.config.js` after `expoConfig`, as research R6 shows. Add a block for `.claude/hooks/**/*.mjs` with Node globals (`globals.node`, already available through ESLint) so the hook scripts lint cleanly.
+- [ ] T003 [P] Add `eslint-plugin-prettier/recommended` to `eslint.config.js` after `expoConfig`, as research R6 shows. Add a block for `.claude/hooks/**/*.mjs` with `languageOptions: { sourceType: "module", globals: { process: "readonly", console: "readonly", Buffer: "readonly" } }`, listing only the Node globals the hooks use, so the hook scripts lint cleanly with no new dependency.
 - [ ] T004 Update the `package.json` scripts to match contracts/pipelines.md:
   - Add `typecheck` (`tsc --noEmit`), `format` (`prettier --write .`), `format:check` (`prettier --check .`), `test` (`jest`) and `e2e` (`maestro test .maestro`).
   - Keep `lint`, `start`, `android`, `ios` and `web`. Remove `reset-project`.
-  - Add a `jest` block: `preset: "jest-expo"`, `moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" }`, `testPathIgnorePatterns: ["/node_modules/", "/.maestro/"]`.
-- [ ] T005 Add `"types": ["jest"]` to `compilerOptions` in `tsconfig.json`. Then run `npm run format` once to normalise existing files, and confirm `npm run typecheck`, `npm run lint` and `npm run format:check` pass. `npm test` passes with `--passWithNoTests` at this point only.
+  - Add a `jest` block: `preset: "jest-expo"`, `moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" }`, `testPathIgnorePatterns: ["/node_modules/", "/.maestro/"]`, `passWithNoTests: true` (temporary, removed in T026, so CI and the Stop hook pass before the first test exists).
+- [ ] T005 Add `"types": ["jest"]` to `compilerOptions` in `tsconfig.json`. Then run `npm run format` once to normalise existing files, and confirm `npm run typecheck`, `npm run lint` and `npm run format:check` pass. `npm test` passes because of `passWithNoTests` (removed in T026).
 - [ ] T006 Commit: `chore(001): add Prettier, Jest and RNTL with typecheck/format/test scripts`.
 
 ---
@@ -102,12 +102,12 @@ JSON into both hooks and check the exit codes).
   - Run `npx prettier --write` for `.ts .tsx .js .jsx .mjs .cjs .json .yml .yaml .md .css`, and `npx eslint --fix` for `.ts .tsx .js .jsx .mjs .cjs`.
   - Exit 2 with the ESLint output on stderr when lint errors remain, and exit 1 on a tool crash.
 - [ ] T015 [P] [US4] Create `.claude/hooks/check-on-stop.mjs` to match contracts/agent-hooks.md:
-  - Exit 0 if `git status --porcelain` shows no changed paths outside `specs/`, `docs/` and `.specify/`.
+  - Exit 0 only if `git status --porcelain` shows no changed paths outside `specs/`, `docs/` and `.specify/` **and** `HEAD` equals the SHA in `<os.tmpdir()>/fridgeit-stop-hook/last-green-head`, so commits made during the turn are still checked.
   - Otherwise run `npm run typecheck`, then `npm test -- --silent`.
   - Keep the attempt counter in `<os.tmpdir()>/fridgeit-stop-hook/<session_id>.json`, reset when `stop_hook_active` is `false`.
   - Failures 1–3: exit 2 with stderr "Typecheck/tests failed (attempt n of 3). Fix these before handing over:" plus the trimmed output (last ~80 lines).
   - Failure 4: exit 0 with stdout `{"systemMessage": "Checks still failing after 3 attempts — handing over with failures: …"}`.
-  - Success: delete the state file and exit 0.
+  - Success: delete the state file, write `HEAD` to `last-green-head`, and exit 0.
 - [ ] T016 [US4] Add the `hooks` block from contracts/agent-hooks.md (PostToolUse `Edit|Write`, timeout 60; Stop, timeout 300; both in exec form with `node` and `${CLAUDE_PROJECT_DIR}`) to `.claude/settings.json`, keeping the existing `enabledPlugins` and `attribution` keys.
 - [ ] T017 [US4] Verify the hooks as in quickstart V3:
   - Pipe a Write payload for a messy file into `format-and-lint.mjs`: it gets reformatted, exit 0.
@@ -146,7 +146,7 @@ and V5 (`npm run e2e`).
   - "My food" is shown, with no template screens or tabs.
   - In airplane mode, a relaunch still shows it with no error.
   Then run `npm run e2e` and confirm `launch.yaml` passes. **(developer)**: Maestro and `adb` must be on PATH (quickstart prerequisites).
-- [ ] T026 [US3] Commit: `feat(001): replace starter template with My food placeholder screen`.
+- [ ] T026 [US3] Remove `passWithNoTests` from the jest block now that T019 exists, and confirm `npm test` still passes. Commit: `feat(001): replace starter template with My food placeholder screen`.
 
 **Checkpoint**: Story 3 is done and its end-to-end flow passes.
 
@@ -250,16 +250,17 @@ builds instead of publishing).
   - **Commands section:** add `npm run typecheck`, `npm run format`, `npm run format:check`, `npm test`, `npm run e2e` (release build plus Maestro), and the EAS commands (`npx eas-cli@latest build --profile <p>`, `update --channel production`).
   - **Architecture section:** add `src/platform/updates/`, the hooks in `.claude/hooks/`, the CI and EAS workflows, and screen tests in `__tests__/app/`.
   - Note that the Stop hook blocks hand-over up to 3 times.
-- [ ] T045 [P] Update `docs/roadmap.md`: set 001's status to "Done".
+- [ ] T045 [P] Update `docs/roadmap.md`: set 001's status to "In review" (FR-022; it becomes "Done" in T051).
 - [ ] T046 Run the full local check (`npm run typecheck; npm run lint; npm run format:check; npm test`) plus `npx expo-doctor`, and confirm no `expo-updates` import exists outside `src/platform/updates/expo-updates-adapter.ts` (grep).
-- [ ] T047 Commit: `docs(001): update CLAUDE.md commands/architecture and mark 001 done`. Push, and mark the PR ready for review. In the PR body, tick **Native runtime changed (needs a new build)**, link `specs/001-foundation/`, and attach the emulator screenshots.
-- [ ] T048 **(developer)** Merge the PR once `check` is green. On expo.dev → Workflows, confirm `preview.yml` ran `build` and skipped `update` (there's no build yet). Install the APK on the phone from the build's install link.
-- [ ] T049 Create the `main` ruleset from contracts/pipelines.md (require a PR with 0 approvals, require the `check` status with an up-to-date branch, block force pushes, restrict deletions, Repository admin bypass). Use `gh api repos/kka2020/fridgeit/rulesets` with the developer's confirmation, or the developer does it in the GitHub UI. Verify with quickstart V2.
-- [ ] T050 **(developer, with the agent)** Done-when run (quickstart V7):
-  - On a new branch, change the "My food" placeholder text, open a PR, and merge it when `check` passes.
+- [ ] T047 Run `/code-review` on the branch against `main` (constitution, Development Workflow). Fix what it finds, then rerun the T046 checks if anything changed.
+- [ ] T048 Commit: `docs(001): update CLAUDE.md commands/architecture and mark 001 in review`. Push, and mark the PR ready for review. In the PR body, tick **Native runtime changed (needs a new build)**, link `specs/001-foundation/`, and attach the emulator screenshots.
+- [ ] T049 **(developer)** Merge the PR once `check` is green. On expo.dev → Workflows, confirm `preview.yml` ran `build` and skipped `update` (there's no build yet). Install the APK on the phone from the build's install link.
+- [ ] T050 Create the `main` ruleset from contracts/pipelines.md (require a PR with 0 approvals, require the `check` status with an up-to-date branch, block force pushes, restrict deletions, Repository admin bypass). Use `gh api repos/kka2020/fridgeit/rulesets` with the developer's confirmation, or the developer does it in the GitHub UI. Verify with quickstart V2.
+- [ ] T051 **(developer, with the agent)** Done-when run (quickstart V7):
+  - On a new branch, change the "My food" placeholder text and set 001's status in `docs/roadmap.md` to "Done" (FR-022), open a PR, and merge it when `check` passes.
   - Confirm the workflow ran `update` and skipped `build`.
   - Within 15 minutes, the phone shows the banner, and after a restart it shows the new text with no reinstall (SC-001, SC-002, SC-002a).
-- [ ] T051 **(developer)** Banner check on the phone (quickstart V6): dismiss stays hidden after backgrounding, a cold start applies the update, and "Restart" applies it immediately. V8 (native change builds) is optional and costs one build from the free-tier quota.
+- [ ] T052 **(developer)** Banner check on the phone (quickstart V6): dismiss stays hidden after backgrounding, a cold start applies the update, and "Restart" applies it immediately. V8 (native change builds) is optional and costs one build from the free-tier quota.
 
 ---
 
@@ -324,7 +325,7 @@ T031 src/platform/updates/updates-adapter.ts + expo-updates-adapter.ts
 3. **Delivery last.** Phases 6–7 need the developer's Expo account. The first preview build
    happens automatically when the PR merges.
 4. **Proof.** Phase 8's done-when run is the acceptance test for the whole feature. 001 is done
-   only when T050 passes.
+   only when T051 passes.
 
 Per CLAUDE.md, implement one phase at a time and commit after each. Stop at every
 **(developer)** task and ask.

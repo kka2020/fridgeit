@@ -61,13 +61,17 @@ Windows).
 **Input (stdin JSON)**: `session_id` and `stop_hook_active`.
 
 **Behaviour**:
-1. If `git status --porcelain` lists no changed files outside `specs/`, `docs/` and `.specify/`,
-   exit 0 without running anything. Turns that only answer questions or edit specs stay fast.
+1. Exit 0 without running anything only if both of these hold:
+   - `git status --porcelain` lists no changed files outside `specs/`, `docs/` and `.specify/`.
+   - `HEAD` equals the SHA saved in `<os.tmpdir()>/fridgeit-stop-hook/last-green-head`.
+
+   Turns that only answer questions or edit specs stay fast, and a commit made during the turn
+   is still checked.
 2. Run `npm run typecheck`, then `npm test -- --silent`, and capture the output.
 3. The state file is `<os.tmpdir()>/fridgeit-stop-hook/<session_id>.json` with
    `{ "attempts": n }`:
    - If `stop_hook_active` is `false`, this is a new turn, so reset `attempts` to 0.
-   - On success, delete the file and exit 0.
+   - On success, delete the file, save `HEAD` to `last-green-head`, and exit 0.
    - On failure, increment `attempts`.
 
 **Output**:

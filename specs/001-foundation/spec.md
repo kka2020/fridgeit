@@ -280,7 +280,8 @@ install the preview build on a phone by downloading the file directly.
   fails, the agent MUST be sent back to fix it instead of handing over, up to 3 attempts per
   turn; after the third failed attempt it MUST hand over with the failures clearly reported.
 - **FR-022**: `CLAUDE.md` MUST be updated with any new or changed commands, and
-  `docs/roadmap.md` MUST mark feature 001 as done in the feature's change.
+  `docs/roadmap.md` MUST mark feature 001 as in review in the feature's change, and as done in
+  the change that completes the done-when run.
 
 ### Key Entities
 

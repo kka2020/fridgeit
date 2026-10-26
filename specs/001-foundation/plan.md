@@ -175,3 +175,4 @@ Each phase ends green (typecheck, lint, tests) with one commit.
 |---|---|---|
 | `UpdatesAdapter` interface + React context provider | Principle III requires platform APIs behind adapters. FR-018 requires the banner logic to be testable without a real update service. | Calling `useUpdates()` in the component and mocking `expo-updates` in Jest breaks principle III, and ties tests to library internals. |
 | Attempt counter in the Stop hook (temp file per session) | Clarification Q3: block hand-over at most 3 times per turn. | A stateless hook either never blocks or can loop until Claude Code's cap of 8. |
+| Last passing `HEAD` saved by the Stop hook (one temp file) | FR-021: checks must run at the end of a turn even when the turn committed its changes, and every phase ends with a commit. | Skipping on a clean `git status` alone lets a committed but broken change through. Always running the checks makes question-only turns slow. |
