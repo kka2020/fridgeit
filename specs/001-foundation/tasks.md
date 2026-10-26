@@ -65,15 +65,15 @@ clean-up). It changes the fingerprint, so it is done once, before any build (R3,
 
 **⚠️ CRITICAL**: US2, US5 and US1 depend on this phase.
 
-- [ ] T007 Confirm with a grep that `src/` doesn't import `@expo/ui`, `expo-device`, `expo-glass-effect`, `expo-image`, `expo-symbols` or `expo-web-browser`, then remove them with `npm uninstall @expo/ui expo-device expo-glass-effect expo-image expo-symbols expo-web-browser`. Uninstalling is allowed; adding still goes through `expo install`.
-- [ ] T008 Install the runtime dependencies from plan.md: `npx expo install expo-updates expo-dev-client`.
-- [ ] T009 Edit `app.json`:
+- [X] T007 Confirm with a grep that `src/` doesn't import `@expo/ui`, `expo-device`, `expo-glass-effect`, `expo-image`, `expo-symbols` or `expo-web-browser`, then remove them with `npm uninstall @expo/ui expo-device expo-glass-effect expo-image expo-symbols expo-web-browser`. Uninstalling is allowed; adding still goes through `expo install`.
+- [X] T008 Install the runtime dependencies from plan.md: `npx expo install expo-updates expo-dev-client`.
+- [X] T009 Edit `app.json`:
   - Add `expo.android.package: "com.kavinkodikara.fridgeit"` (FR-013, permanent).
   - Add `expo.runtimeVersion: { "policy": "fingerprint" }` (FR-011).
   - Add `expo.updates: { "checkAutomatically": "ON_LOAD", "fallbackToCacheTimeout": 0 }`, as in data-model.md.
   - Leave `updates.url` and `extra.eas` for T038.
-- [ ] T010 Run `npx expo-doctor` and `npx expo install --check`, and fix any reported version mismatches with `npx expo install --fix`.
-- [ ] T011 Commit: `build(001): set Android package, fingerprint runtime, add expo-updates and dev client`.
+- [X] T010 Run `npx expo-doctor` and `npx expo install --check`, and fix any reported version mismatches with `npx expo install --fix`.
+- [X] T011 Commit: `build(001): set Android package, fingerprint runtime, add expo-updates and dev client`.
 
 **Checkpoint**: the native configuration is final for 001. Any later change to it means a new
 build.

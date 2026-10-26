@@ -38,7 +38,9 @@ Node 24 (local and CI)
 - New dev: `jest-expo`, `jest`, `@types/jest`, `@testing-library/react-native`, `prettier`,
   `eslint-config-prettier`, `eslint-plugin-prettier`.
 - Removed: `@expo/ui`, `expo-device`, `expo-glass-effect`, `expo-image`, `expo-symbols`,
-  `expo-web-browser`.
+  `expo-web-browser`. (`expo-router` 57 depends on `@expo/ui`, `expo-glass-effect` and
+  `expo-symbols` itself, so those three stay in `node_modules`; the app no longer depends on
+  them directly.)
 
 **Storage**: N/A. 001 stores no data, and the "dismissed" flag lives in memory for the session.
 
