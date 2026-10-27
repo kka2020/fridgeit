@@ -74,4 +74,6 @@ A pure-domain rules table (in `src/domain/`) that the user can override.
 
 ## Out of scope for now
 Barcode scanning, the iOS build, web and tablet layouts, cloud sync and sharing, waste
-stats.
+stats, and AI meal suggestions from expiring items. The suggestions need the network and an
+AI service, so before they're specified they need a constitution amendment (principle IV) and
+an ADR covering how the AI API key is kept out of the app.

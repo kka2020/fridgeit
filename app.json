@@ -7,10 +7,18 @@
     "icon": "./assets/images/icon.png",
     "scheme": "fridgeit",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.kavinkodikara.fridgeit",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
