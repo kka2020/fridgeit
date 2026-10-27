@@ -90,26 +90,26 @@ JSON into both hooks and check the exit codes).
 
 ### Implementation for User Story 4
 
-- [ ] T012 [P] [US4] Create `.github/workflows/check.yml` exactly as in contracts/pipelines.md:
+- [X] T012 [P] [US4] Create `.github/workflows/check.yml` exactly as in contracts/pipelines.md:
   - Triggers: `pull_request` and `push` to `main`.
   - One job with id `check` on `ubuntu-latest`, `timeout-minutes: 15`.
   - Steps: `actions/checkout@v4`, `actions/setup-node@v4` with `node-version: 24` and `cache: npm`, `npm ci`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test -- --ci`.
   - No secrets.
-- [ ] T013 [P] [US4] Create `.github/pull_request_template.md` with the sections listed in contracts/pipelines.md: Summary, Spec link, Checks, a **Native runtime** checkbox ("This change alters the native runtime (new native module, native `app.json` config, SDK upgrade) and needs a new build") and "UI verified on the emulator" with screenshots.
-- [ ] T014 [P] [US4] Create `.claude/hooks/format-and-lint.mjs` to match contracts/agent-hooks.md:
+- [X] T013 [P] [US4] Create `.github/pull_request_template.md` with the sections listed in contracts/pipelines.md: Summary, Spec link, Checks, a **Native runtime** checkbox ("This change alters the native runtime (new native module, native `app.json` config, SDK upgrade) and needs a new build") and "UI verified on the emulator" with screenshots.
+- [X] T014 [P] [US4] Create `.claude/hooks/format-and-lint.mjs` to match contracts/agent-hooks.md:
   - Read the stdin JSON and normalise backslashes in `tool_input.file_path`.
   - Skip (exit 0) for files outside the project, deleted files, and files matched by `.prettierignore` (check with `prettier --file-info`).
   - Run `npx prettier --write` for `.ts .tsx .js .jsx .mjs .cjs .json .yml .yaml .md .css`, and `npx eslint --fix` for `.ts .tsx .js .jsx .mjs .cjs`.
   - Exit 2 with the ESLint output on stderr when lint errors remain, and exit 1 on a tool crash.
-- [ ] T015 [P] [US4] Create `.claude/hooks/check-on-stop.mjs` to match contracts/agent-hooks.md:
+- [X] T015 [P] [US4] Create `.claude/hooks/check-on-stop.mjs` to match contracts/agent-hooks.md:
   - Exit 0 only if `git status --porcelain` shows no changed paths outside `specs/`, `docs/` and `.specify/` **and** `HEAD` equals the SHA in `<os.tmpdir()>/fridgeit-stop-hook/last-green-head`, so commits made during the turn are still checked.
   - Otherwise run `npm run typecheck`, then `npm test -- --silent`.
   - Keep the attempt counter in `<os.tmpdir()>/fridgeit-stop-hook/<session_id>.json`, reset when `stop_hook_active` is `false`.
   - Failures 1–3: exit 2 with stderr "Typecheck/tests failed (attempt n of 3). Fix these before handing over:" plus the trimmed output (last ~80 lines).
   - Failure 4: exit 0 with stdout `{"systemMessage": "Checks still failing after 3 attempts — handing over with failures: …"}`.
   - Success: delete the state file, write `HEAD` to `last-green-head`, and exit 0.
-- [ ] T016 [US4] Add the `hooks` block from contracts/agent-hooks.md (PostToolUse `Edit|Write`, timeout 60; Stop, timeout 300; both in exec form with `node` and `${CLAUDE_PROJECT_DIR}`) to `.claude/settings.json`, keeping the existing `enabledPlugins` and `attribution` keys.
-- [ ] T017 [US4] Verify the hooks as in quickstart V3:
+- [X] T016 [US4] Add the `hooks` block from contracts/agent-hooks.md (PostToolUse `Edit|Write`, timeout 60; Stop, timeout 300; both in exec form with `node` and `${CLAUDE_PROJECT_DIR}`) to `.claude/settings.json`, keeping the existing `enabledPlugins` and `attribution` keys.
+- [X] T017 [US4] Verify the hooks as in quickstart V3:
   - Pipe a Write payload for a messy file into `format-and-lint.mjs`: it gets reformatted, exit 0.
   - Pipe a payload for a file with an unused variable: exit 2, and the ESLint message appears on stderr.
   - With a deliberately failing test, `check-on-stop.mjs` exits 2, 2, 2 and then 0 with `systemMessage` (passing `stop_hook_active: true` after the first). Then remove the failing test.
