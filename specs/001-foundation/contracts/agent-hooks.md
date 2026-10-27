@@ -46,15 +46,21 @@ Windows).
    `.prettierignore`.
 2. If Prettier supports the extension (`.ts .tsx .js .jsx .mjs .cjs .json .yml .yaml .md .css`),
    run `prettier --write <file>`.
-3. For `.ts .tsx .js .jsx .mjs .cjs` files, run `eslint --fix <file>`.
+3. For `.ts .tsx .js .jsx .mjs .cjs` files, run `eslint --fix --max-warnings 0 <file>`.
+   Warnings (such as unused variables, which `eslint-config-expo` reports as warnings) are sent
+   back to the agent too. CI's `expo lint` still lets warnings pass.
+
+Both tools run from the project's `node_modules` (`node node_modules/prettier/bin/prettier.cjs`,
+`node node_modules/eslint/bin/eslint.js`) rather than through `npx`. This is faster and avoids
+Windows shell quoting.
 
 **Output**:
 
 | Situation | Exit | stderr |
 |---|---|---|
 | Formatted and linted cleanly, or skipped | 0 | none |
-| Lint errors remain after `--fix` | 2 | The ESLint output, shown to Claude; the edit itself stands |
-| A tool crashed (for example, `node_modules` missing) | 1 | The error; non-blocking, shown in the transcript |
+| ESLint errors or warnings remain after `--fix`, or Prettier can't parse the file | 2 | The tool output, shown to Claude; the edit itself stands |
+| A tool couldn't run (for example, `node_modules` missing) | 1 | The error; non-blocking, shown in the transcript |
 
 ## `check-on-stop.mjs` (Stop)
 

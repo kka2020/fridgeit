@@ -18,6 +18,41 @@ first)** MUST be run and seen failing before the matching implementation task.
 because it guards every later change, and US1 (P1) comes last because it needs the screen (US3),
 the banner (US2) and the build profiles (US5).
 
+## Progress and handover
+
+*Last updated 2026-10-27. Update this section whenever a phase is committed.*
+
+**Status**: Phases 1–3 (T001–T018) are done and pushed. The draft PR is
+[#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`), and its `check` job
+passes. The phase commits are `051bb94` (Phase 1), `fc8d59b` (Phase 2) and `1f88799` (Phase 3).
+
+**Next**: Phase 4, starting with T019 (test first). Before T025, ask the developer to confirm the
+Android emulator is running and that `adb` and `maestro` are on PATH (quickstart prerequisites).
+They haven't confirmed this yet.
+
+**Things to know before continuing**:
+- **The agent hooks are live.** After every Edit or Write, `format-and-lint.mjs` reformats the
+  file and reports ESLint errors *and warnings*. Before hand-over, `check-on-stop.mjs` runs
+  typecheck and tests. Re-read a file after an edit if the hook may have reformatted it.
+- **`passWithNoTests: true`** is set in the jest block of `package.json` only until the first
+  test exists. T026 removes it.
+- **React Native Testing Library 14:** `render` is async, so tests use `await render(...)`.
+  `npm install` prints a peer warning (`test-renderer` wants React ^19.3; the app has 19.2.3).
+  A smoke test showed it works, so ignore it unless tests break.
+- **`expo-router` 57 depends on `@expo/ui`, `expo-glass-effect` and `expo-symbols`**, so they're
+  still in `node_modules`. The app must not import them; see plan.md.
+- **T024:** `scripts/reset-project.js` doesn't exist. Confirm that and tick the task.
+- **Pushing:** ask the developer before pushing or changing PR #1. The PR description lists the
+  phases done so far; refresh it when the PR is marked ready (T048).
+- **Open `/speckit-analyze` findings** (none block implementation):
+  - U1: Story 5, scenario 2 (production-only updates) can't be tested in 001.
+  - A1: nothing measures the 10-minute CI target. The first run took 33 s.
+  - C2: T025 doesn't state the 2 s launch target.
+  - C3: the format hook misses edits made through shell commands.
+  - U3: a PR template checkbox can't be made required.
+  - D3: the not-applicable screen states aren't recorded in Complexity Tracking.
+  - D4: spec.md still says Status: Draft.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: can run in parallel (different files, no dependency on unfinished tasks).
@@ -37,7 +72,10 @@ A single Expo project:
 - Adapters: `src/platform/`
 - Screen tests: root `__tests__/app/`
 
-Add dependencies only with `npx expo install` (on Windows, put `"--"` before `--dev`).
+Add dependencies only with `npx expo install`. For dev dependencies, pass `--dev` through to npm:
+`npx expo install <pkg> "--" --dev` in PowerShell, or `npx expo install <pkg> -- -- --dev` in
+Git Bash, where `npx` swallows a single `--`. Check afterwards that the packages landed in
+`devDependencies`.
 
 ---
 
@@ -99,8 +137,8 @@ JSON into both hooks and check the exit codes).
 - [X] T014 [P] [US4] Create `.claude/hooks/format-and-lint.mjs` to match contracts/agent-hooks.md:
   - Read the stdin JSON and normalise backslashes in `tool_input.file_path`.
   - Skip (exit 0) for files outside the project, deleted files, and files matched by `.prettierignore` (check with `prettier --file-info`).
-  - Run `npx prettier --write` for `.ts .tsx .js .jsx .mjs .cjs .json .yml .yaml .md .css`, and `npx eslint --fix` for `.ts .tsx .js .jsx .mjs .cjs`.
-  - Exit 2 with the ESLint output on stderr when lint errors remain, and exit 1 on a tool crash.
+  - Run `prettier --write` for `.ts .tsx .js .jsx .mjs .cjs .json .yml .yaml .md .css`, and `eslint --fix --max-warnings 0` for `.ts .tsx .js .jsx .mjs .cjs`. Both run from `node_modules` directly, not through `npx`.
+  - Exit 2 with the tool output on stderr when ESLint errors or warnings remain or Prettier can't parse the file, and exit 1 when a tool can't run.
 - [X] T015 [P] [US4] Create `.claude/hooks/check-on-stop.mjs` to match contracts/agent-hooks.md:
   - Exit 0 only if `git status --porcelain` shows no changed paths outside `specs/`, `docs/` and `.specify/` **and** `HEAD` equals the SHA in `<os.tmpdir()>/fridgeit-stop-hook/last-green-head`, so commits made during the turn are still checked.
   - Otherwise run `npm run typecheck`, then `npm test -- --silent`.
@@ -113,7 +151,7 @@ JSON into both hooks and check the exit codes).
   - Pipe a Write payload for a messy file into `format-and-lint.mjs`: it gets reformatted, exit 0.
   - Pipe a payload for a file with an unused variable: exit 2, and the ESLint message appears on stderr.
   - With a deliberately failing test, `check-on-stop.mjs` exits 2, 2, 2 and then 0 with `systemMessage` (passing `stop_hook_active: true` after the first). Then remove the failing test.
-- [ ] T018 [US4] Commit: `ci(001): add check workflow, PR template and Claude Code format/stop hooks`. Push the branch and confirm the `check` job runs green on GitHub for the branch's PR (open a draft PR `001-foundation` → `main` if none exists).
+- [X] T018 [US4] Commit: `ci(001): add check workflow, PR template and Claude Code format/stop hooks`. Push the branch and confirm the `check` job runs green on GitHub for the branch's PR (open a draft PR `001-foundation` → `main` if none exists).
 
 **Checkpoint**: from here on, every edit and every PR is checked automatically.
 
@@ -246,10 +284,10 @@ builds instead of publishing).
 
 **Purpose**: the FR-022 docs, the PR, branch protection and the end-to-end proof.
 
-- [ ] T044 [P] Update `CLAUDE.md`:
-  - **Commands section:** add `npm run typecheck`, `npm run format`, `npm run format:check`, `npm test`, `npm run e2e` (release build plus Maestro), and the EAS commands (`npx eas-cli@latest build --profile <p>`, `update --channel production`).
-  - **Architecture section:** add `src/platform/updates/`, the hooks in `.claude/hooks/`, the CI and EAS workflows, and screen tests in `__tests__/app/`.
-  - Note that the Stop hook blocks hand-over up to 3 times.
+- [ ] T044 [P] Finish updating `CLAUDE.md` and `README.md`. The npm scripts, the hooks, `.claude/hooks/` and the CI workflow were added after Phase 3; add what's still missing:
+  - **Commands section:** the EAS commands (`npx eas-cli@latest build --profile <p>`, `update --channel production`), and confirm `npm run e2e` is described as release build plus Maestro.
+  - **Architecture section:** `src/platform/updates/`, `src/components/`, the EAS workflow in `.eas/workflows/`, and screen tests in `__tests__/app/`.
+  - **README:** the release flow (merge → preview update or build).
 - [ ] T045 [P] Update `docs/roadmap.md`: set 001's status to "In review" (FR-022; it becomes "Done" in T051).
 - [ ] T046 Run the full local check (`npm run typecheck; npm run lint; npm run format:check; npm test`) plus `npx expo-doctor`, and confirm no `expo-updates` import exists outside `src/platform/updates/expo-updates-adapter.ts` (grep).
 - [ ] T047 Run `/code-review` on the branch against `main` (constitution, Development Workflow). Fix what it finds, then rerun the T046 checks if anything changed.

@@ -15,6 +15,8 @@ It works offline, keeps all data on the device, and has no backend or accounts.
 - Loop: `/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks` →
   `/speckit-analyze` → `/speckit-implement`. Implement one task phase at a time and commit
   after each.
+- **Where we left off:** the "Progress and handover" section at the top of the current feature's
+  `tasks.md`. Read it first, and update it whenever a phase is committed.
 - Roadmap and feature status: `docs/roadmap.md`.
 - Stack rationale: `docs/decisions/`. Don't reopen recorded decisions; propose a new ADR
   that supersedes them instead.
@@ -29,13 +31,27 @@ It works offline, keeps all data on the device, and has no backend or accounts.
 - `src/platform/`: adapters for notifications and updates, behind interfaces.
 - Notifications are derived state: `reconcileNotifications()` rebuilds them from the
   database.
+- `.github/workflows/check.yml`: the `check` job (typecheck, lint, format check, tests) on every
+  PR and on pushes to `main`.
+- `.claude/hooks/`: Claude Code hooks, registered in `.claude/settings.json`:
+  - `format-and-lint.mjs` runs after every Edit or Write. It formats the file with Prettier and
+    reports ESLint errors and warnings back to the agent. Re-read a file after editing it if
+    the hook may have reformatted it.
+  - `check-on-stop.mjs` runs typecheck and tests before hand-over. If they fail, it sends the
+    agent back up to 3 times, then hands over with the failures reported.
 
 ## Commands
 
-- `npx expo install <pkg>`: add a dependency (never `npm install <pkg>`)
-- `npx tsc --noEmit`: typecheck
-- `npx expo lint`: lint
-- `npm test`: tests (added in feature 001)
+- `npx expo install <pkg>`: add a dependency (never `npm install <pkg>`). For dev dependencies:
+  `npx expo install <pkg> -- -- --dev` in Git Bash, or `npx expo install <pkg> "--" --dev` in
+  PowerShell.
+- `npm run typecheck`: typecheck (`tsc --noEmit`, strict)
+- `npm run lint`: lint (`expo lint`)
+- `npm run format` / `npm run format:check`: format with Prettier / check formatting
+- `npm test`: Jest tests (`jest-expo` and React Native Testing Library)
+- `npm run e2e`: Maestro flows in `.maestro/`. Needs a release build on the emulator
+  (`npx expo run:android --variant release`), with `adb` and `maestro` on PATH.
+- `npx expo-doctor`: check dependency versions and config
 - `npx expo run:android`: local development build on the emulator or phone
 - `$env:EXPO_UNSTABLE_MCP_SERVER=1; npx expo start`: dev server with the Expo MCP local
   tools (screenshots, taps, logs)

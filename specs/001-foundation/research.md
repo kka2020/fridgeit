@@ -203,13 +203,16 @@ clarification (local only); it can be added later with the same flow file.
 the same in Git Bash, PowerShell and CI.
 - **`PostToolUse`** (matcher `Edit|Write`) runs `format-and-lint.mjs`. It reads
   `tool_input.file_path` from stdin and normalises backslashes. If the extension is one Prettier
-  handles and the file isn't ignored, it runs `prettier --write`. For `.ts`, `.tsx`, `.js`, `.jsx`
-  and `.mjs` files, it runs `eslint --fix`. Remaining lint errors exit with code 2, sending stderr
-  to Claude, which doesn't block.
+  handles and the file isn't ignored, it runs `prettier --write`. For `.ts`, `.tsx`, `.js`, `.jsx`,
+  `.mjs` and `.cjs` files, it runs `eslint --fix --max-warnings 0`. Remaining lint errors or
+  warnings exit with code 2, sending stderr to Claude, which doesn't block. Both tools run from
+  `node_modules` directly, not through `npx`.
 - **`Stop`** runs `check-on-stop.mjs`:
   - Skip (exit 0) when `git status --porcelain` shows no changed code files and `HEAD` is the
     commit of the last passing run, so commits made during a turn are still checked.
-  - Otherwise, run `npm run typecheck` and `npm test -- --silent`.
+  - Otherwise, run `npm run typecheck` and `npm test -- --silent`. On Windows, `npm` is a `.cmd`
+    shim, so it runs through a shell as one fixed command line. Passing an argument list with
+    `shell: true` triggers Node 24's DEP0190 warning.
   - On failure, keep an attempt count per `session_id` in `os.tmpdir()`. The count resets when
     `stop_hook_active` is `false`, which means a new turn. For failures 1 to 3, exit with code 2
     and the failure output, which blocks hand-over and sends the agent back. On the fourth
