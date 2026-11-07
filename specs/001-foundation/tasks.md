@@ -40,7 +40,7 @@ the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PAT
   in parallel. The main session then runs the full check. Before each phase commit, a fresh
   read-only `phase-reviewer` (`.claude/agents/phase-reviewer.md`) reviews the phase diff, with
   at most 2 review rounds. The `Stop` hook doesn't gate subagents, so the orchestrator runs the
-  checks itself. The plan is in `~/.claude/plans/plan-how-we-can-radiant-journal.md`.
+  checks itself.
 - **The agent hooks are live.** After every Edit or Write, `format-and-lint.mjs` reformats the
   file and reports ESLint errors *and warnings*. Before hand-over, `check-on-stop.mjs` runs
   typecheck and tests. Re-read a file after an edit if the hook may have reformatted it.
