@@ -22,14 +22,18 @@ the banner (US2) and the build profiles (US5).
 
 *Last updated 2026-11-07. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–5 (T001–T036) are done. The draft PR is
+**Status**: Phases 1–6 (T001–T040) are done. The draft PR is
 [#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`). The phase commits are
-`051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4, pushed) and the
-`feat(001): add update-ready banner with 15-minute foreground checks` commit (Phase 5). Phase 5 is
-committed locally but **not pushed** yet.
+`051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4), `3628d06`
+(Phase 5) and the `build(001): add EAS project config and development/preview/production profiles`
+commit (Phase 6). Phases 1–5 are pushed; Phase 6 is committed locally but **not pushed** yet.
 
-**Next**: Phase 6, starting with T037. It is a **(developer)** step: the developer must run
-`! npx eas-cli@latest login` before the agent runs `eas init` and `eas update:configure`.
+**Next**: Phase 7, starting with T041 (`.eas/workflows/preview.yml`). T042 is a **(developer)**
+step: install the Expo GitHub app and connect the repo on expo.dev.
+
+**EAS project (Phase 6)**: owner `kka2026`, project ID `fe71867f-0c35-4757-9e27-f6c3731c52d2`. The
+developer's environment has `EXPO_TOKEN` set, so EAS CLI authenticates with it (no `eas login`).
+T039 was verified with an adb screenshot and a uiautomator dump rather than Expo MCP.
 
 **Open Phase 5 review nit**: nothing tests the real `expoUpdatesAdapter`'s error swallowing (FR-007
 "never throws"). The contract doesn't require it; the hook also swallows rejections.
@@ -66,6 +70,19 @@ the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PAT
   - A Metro left running from an earlier `expo run` (CI mode, stale code) holds port 8081 and
     breaks the dev client with "There was a problem loading the project". Check
     `curl localhost:8081/status` and stop the old one first.
+  - When an agent runs `expo run:android` in the background, prefix it with `CI=1` so it doesn't
+    wait for interactive input. Stopping the background task doesn't stop its `node` child, which
+    keeps holding port 8081; stop that process too.
+  - **"App isn't responding" / "failed to complete startup" on launch** means the emulator is
+    degraded (seen after ~8 hours of uptime, load average ~5, 2 GB AVD RAM), not the app: a cold
+    restart (`adb emu kill`, then `emulator -avd Medium_Phone_API_35 -no-snapshot-load`) fixed it,
+    and the dev bundle (1,413 modules) then built in 2.3 s and showed "My food". Wait a minute after
+    boot, while the load average settles, before measuring launch time.
+  - If a build hangs with no output, the adb server may be hung: stop the `adb` processes and run
+    `adb start-server`. If Gradle fails with "Unable to delete ... classes.jar", idle Gradle
+    workers hold the file: run `./gradlew --stop` in `android/`.
+- **uiautomator checks:** delete `/sdcard/ui.xml` before each `uiautomator dump`, or a failed dump
+  leaves the previous file and gives a false result.
 - **Git Bash and adb:** set `MSYS_NO_PATHCONV=1`, or Git Bash rewrites `/sdcard/...` into a Windows
   path and `adb shell` commands silently fail.
 - **React Native Testing Library 14:** `render` is async, so tests use `await render(...)`.
@@ -278,14 +295,14 @@ and the update URL is configured.
 **Independent test**: `npx eas-cli@latest build --profile preview --platform android` (or the
 first workflow run in Phase 7) produces an installable APK on the `preview` channel.
 
-- [ ] T037 [US5] **(developer)** Log in to Expo: `! npx eas-cli@latest login`. Then the agent runs `npx eas-cli@latest init` (creates the EAS project and writes `expo.extra.eas.projectId` and `owner` to `app.json`) and `npx eas-cli@latest update:configure` (writes `expo.updates.url`). Check that `app.json` still has the T009 values.
-- [ ] T038 [US5] Create `eas.json` as in contracts/pipelines.md:
+- [x] T037 [US5] **(developer)** Log in to Expo: `! npx eas-cli@latest login`. Then the agent runs `npx eas-cli@latest init` (creates the EAS project and writes `expo.extra.eas.projectId` and `owner` to `app.json`) and `npx eas-cli@latest update:configure` (writes `expo.updates.url`). Check that `app.json` still has the T009 values.
+- [x] T038 [US5] Create `eas.json` as in contracts/pipelines.md:
   - `cli.appVersionSource: "remote"`, with `cli.version` at least the installed `npx eas-cli@latest --version`.
   - `development`: `{ developmentClient: true, distribution: "internal", environment: "development" }`.
   - `preview`: `{ distribution: "internal", channel: "preview", environment: "preview", android: { buildType: "apk" } }`.
   - `production`: `{ channel: "production", environment: "production", autoIncrement: true }`.
-- [ ] T039 [US5] Verify the development profile locally: `npx expo run:android` installs the dev client on the emulator, connects to Metro, and shows "My food" (Story 5, scenario 3). Take an Expo MCP screenshot.
-- [ ] T040 [US5] Commit: `build(001): add EAS project config and development/preview/production profiles`.
+- [x] T039 [US5] Verify the development profile locally: `npx expo run:android` installs the dev client on the emulator, connects to Metro, and shows "My food" (Story 5, scenario 3). Take an Expo MCP screenshot.
+- [x] T040 [US5] Commit: `build(001): add EAS project config and development/preview/production profiles`.
 
 ---
 

@@ -2,6 +2,7 @@
   "expo": {
     "name": "FridgeIt",
     "slug": "fridgeit",
+    "owner": "kka2026",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,7 +13,8 @@
     },
     "updates": {
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/fe71867f-0c35-4757-9e27-f6c3731c52d2"
     },
     "ios": {
       "icon": "./assets/expo.icon"
@@ -45,6 +47,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fe71867f-0c35-4757-9e27-f6c3731c52d2"
+      }
     }
   }
 }
