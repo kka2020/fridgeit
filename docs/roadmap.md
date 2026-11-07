@@ -10,7 +10,7 @@ on top of the previous ones.
 
 | # | Feature | Status |
 |---|---|---|
-| 001 | Foundation and release pipeline | In progress (Phases 1–4 of 8 done; draft PR #1) |
+| 001 | Foundation and release pipeline | In progress (Phases 1–5 of 8 done; draft PR #1) |
 | 002 | Food inventory | Not started |
 | 003 | Smart expiry defaults | Not started |
 | 004 | Expiry notifications | Not started |

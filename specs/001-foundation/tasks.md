@@ -22,13 +22,17 @@ the banner (US2) and the build profiles (US5).
 
 *Last updated 2026-11-07. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–4 (T001–T026) are done. The draft PR is
-[#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`), and its `check` job
-passes. The phase commits are `051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3) and
-the `feat(001): replace starter template with My food placeholder screen` commit (Phase 4). Phase 4
-is committed locally but **not pushed** yet.
+**Status**: Phases 1–5 (T001–T036) are done. The draft PR is
+[#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`). The phase commits are
+`051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4, pushed) and the
+`feat(001): add update-ready banner with 15-minute foreground checks` commit (Phase 5). Phase 5 is
+committed locally but **not pushed** yet.
 
-**Next**: Phase 5, starting with T027–T029 (test first).
+**Next**: Phase 6, starting with T037. It is a **(developer)** step: the developer must run
+`! npx eas-cli@latest login` before the agent runs `eas init` and `eas update:configure`.
+
+**Open Phase 5 review nit**: nothing tests the real `expoUpdatesAdapter`'s error swallowing (FR-007
+"never throws"). The contract doesn't require it; the hook also swallows rejections.
 
 **Local Android setup (done 2026-11-07)**: `ANDROID_HOME`, `platform-tools` and `emulator` are on
 the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PATH), and the AVD is
@@ -54,6 +58,16 @@ the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PAT
     not in the generated `android/` folder.
   - Prebuild rewrites the `android` and `ios` npm scripts to `expo run:*`. Revert that if it
     happens.
+- **Development builds on the emulator:**
+  - `npx expo run:android --device Medium_Phone_API_35` takes about 8 minutes the first time.
+  - Run `adb reverse tcp:8081 tcp:8081`, then open
+    `exp+fridgeit://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081`. The default URL
+    uses the PC's LAN IP, which the emulator can't reach.
+  - A Metro left running from an earlier `expo run` (CI mode, stale code) holds port 8081 and
+    breaks the dev client with "There was a problem loading the project". Check
+    `curl localhost:8081/status` and stop the old one first.
+- **Git Bash and adb:** set `MSYS_NO_PATHCONV=1`, or Git Bash rewrites `/sdcard/...` into a Windows
+  path and `adb shell` commands silently fail.
 - **React Native Testing Library 14:** `render` is async, so tests use `await render(...)`.
   `npm install` prints a peer warning (`test-renderer` wants React ^19.3; the app has 19.2.3).
   A smoke test showed it works, so ignore it unless tests break.
@@ -217,7 +231,7 @@ pending. Foreground checks are limited to once every 15 minutes.
 
 ### Tests for User Story 2 (test first)
 
-- [ ] T027 [P] [US2] Write `src/domain/__tests__/update-check-policy.test.ts` covering every row of the `shouldCheckForUpdate` table in contracts/updates-adapter.md:
+- [x] T027 [P] [US2] Write `src/domain/__tests__/update-check-policy.test.ts` covering every row of the `shouldCheckForUpdate` table in contracts/updates-adapter.md:
   - `undefined` → true
   - +14 min 59 s → false
   - +15 min → true
@@ -226,31 +240,31 @@ pending. Foreground checks are limited to once every 15 minutes.
   - custom interval of 30 s at +1 min → true
 
   Run it and confirm it fails because the module is missing. Commit the failing test with the next task, or show it failing in the phase notes (principle II).
-- [ ] T028 [P] [US2] Write `src/components/__tests__/update-banner.test.tsx`:
+- [x] T028 [P] [US2] Write `src/components/__tests__/update-banner.test.tsx`:
   - Renders nothing when `visible={false}`.
   - Shows "Update ready" and both buttons when visible.
   - Pressing "Restart to apply update" calls `onRestart`, and pressing "Dismiss update message" calls `onDismiss`. Both buttons are found by `getByLabelText`.
-- [ ] T029 [P] [US2] Write `src/platform/updates/__tests__/use-update-banner.test.tsx` with a fake `UpdatesAdapter` and a fixed `now`, covering all 8 cases in contracts/updates-adapter.md: hidden, shown, restart calls `reload`, dismissed stays hidden even when a new update becomes pending, foreground ≥ 15 min checks, foreground < 15 min doesn't, `isEnabled: false` never checks, and a rejected `checkAndFetch` doesn't throw. Simulate foregrounding by mocking `AppState.addEventListener`.
+- [x] T029 [P] [US2] Write `src/platform/updates/__tests__/use-update-banner.test.tsx` with a fake `UpdatesAdapter` and a fixed `now`, covering all 8 cases in contracts/updates-adapter.md: hidden, shown, restart calls `reload`, dismissed stays hidden even when a new update becomes pending, foreground ≥ 15 min checks, foreground < 15 min doesn't, `isEnabled: false` never checks, and a rejected `checkAndFetch` doesn't throw. Simulate foregrounding by mocking `AppState.addEventListener`.
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Implement `src/domain/update-check-policy.ts`: export `FOREGROUND_CHECK_INTERVAL_MS = 15 * 60 * 1000` and `shouldCheckForUpdate(lastCheckedAt, now, minIntervalMs = FOREGROUND_CHECK_INTERVAL_MS)`. Rules: "`true` when `lastCheckedAt` is `undefined`", "`true` when `now - lastCheckedAt >= minIntervalMs`", "`true` when `lastCheckedAt` is after `now`", otherwise `false`. Use no React, React Native or Expo imports. T027 passes.
-- [ ] T031 [P] [US2] Create `src/platform/updates/updates-adapter.ts`, with the `UpdatesStatus` and `UpdatesAdapter` interfaces exactly as in contracts/updates-adapter.md, and `src/platform/updates/expo-updates-adapter.ts`, which implements them. That file is the **only** file importing `expo-updates`.
+- [x] T030 [US2] Implement `src/domain/update-check-policy.ts`: export `FOREGROUND_CHECK_INTERVAL_MS = 15 * 60 * 1000` and `shouldCheckForUpdate(lastCheckedAt, now, minIntervalMs = FOREGROUND_CHECK_INTERVAL_MS)`. Rules: "`true` when `lastCheckedAt` is `undefined`", "`true` when `now - lastCheckedAt >= minIntervalMs`", "`true` when `lastCheckedAt` is after `now`", otherwise `false`. Use no React, React Native or Expo imports. T027 passes.
+- [x] T031 [P] [US2] Create `src/platform/updates/updates-adapter.ts`, with the `UpdatesStatus` and `UpdatesAdapter` interfaces exactly as in contracts/updates-adapter.md, and `src/platform/updates/expo-updates-adapter.ts`, which implements them. That file is the **only** file importing `expo-updates`.
   - `isEnabled` = `Updates.isEnabled`.
   - `useStatus()` maps `useUpdates()` to `{ isUpdatePending, lastCheckedAt: lastCheckForUpdateTimeSinceRestart }`.
   - `checkAndFetch()` calls `checkForUpdateAsync()`, then `fetchUpdateAsync()` if `isAvailable`, in a try/catch that swallows errors.
   - `reload()` calls `reloadAsync()` in a try/catch.
-- [ ] T032 [US2] Create `src/platform/updates/updates-context.tsx`:
+- [x] T032 [US2] Create `src/platform/updates/updates-context.tsx`:
   - `UpdatesProvider({ adapter = expoUpdatesAdapter, now = () => new Date(), children })` holds the adapter, the clock and the session `dismissed` state.
   - Then create `src/platform/updates/use-update-banner.ts`, which returns `{ visible: isUpdatePending && !dismissed, restart, dismiss }`. It subscribes to `AppState` and, on `active`, calls `checkAndFetch()` only when `adapter.isEnabled && shouldCheckForUpdate(lastCheckedAt, now())`. It doesn't check on mount. T029 passes.
-- [ ] T033 [US2] Implement `src/components/update-banner.tsx`:
+- [x] T033 [US2] Implement `src/components/update-banner.tsx`:
   - A bar pinned to the bottom, inside the safe area, that doesn't cover content (FR-005). It contains the text "Update ready", a "Restart" button (`accessibilityRole="button"`, `accessibilityLabel="Restart to apply update"`) and a dismiss button (`accessibilityLabel="Dismiss update message"`).
   - Both buttons have a minimum 48×48 dp hit area (`minHeight`/`minWidth` 48, `hitSlop` if needed) (FR-008).
   - Theme-aware colours; status is not conveyed by colour alone.
   - T028 passes.
-- [ ] T034 [US2] Wire `src/app/_layout.tsx`: wrap the `Stack` in `UpdatesProvider` and render `<UpdateBanner {...} />` driven by `useUpdateBanner()` below the stack, so it overlays every screen.
-- [ ] T035 [US2] Show the banner on the emulator for a visual check. Temporarily pass a fake adapter with `isUpdatePending: true` from a development build (`npx expo run:android`), take an Expo MCP screenshot, check the 48dp targets and the light and dark themes, then remove the temporary change.
-- [ ] T036 [US2] Commit: `feat(001): add update-ready banner with 15-minute foreground checks`.
+- [x] T034 [US2] Wire `src/app/_layout.tsx`: wrap the `Stack` in `UpdatesProvider` and render `<UpdateBanner {...} />` driven by `useUpdateBanner()` below the stack, as a sibling in a flex column, so it shows on every screen without covering content (FR-005).
+- [x] T035 [US2] Show the banner on the emulator for a visual check. Temporarily pass a fake adapter with `isUpdatePending: true` from a development build (`npx expo run:android`), take an Expo MCP screenshot, check the 48dp targets and the light and dark themes, then remove the temporary change.
+- [x] T036 [US2] Commit: `feat(001): add update-ready banner with 15-minute foreground checks`.
 
 **Checkpoint**: Stories 3 and 2 work, and all Jest suites are green.
 
