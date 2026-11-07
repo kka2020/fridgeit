@@ -68,7 +68,8 @@ Windows shell quoting.
 
 **Behaviour**:
 1. Exit 0 without running anything only if both of these hold:
-   - `git status --porcelain` lists no changed files outside `specs/`, `docs/` and `.specify/`.
+   - `git status --porcelain` lists no changed files outside `specs/`, `docs/`, `.specify/` and
+     `.claude/`, other than Markdown (`*.md`) files.
    - `HEAD` equals the SHA saved in `<os.tmpdir()>/fridgeit-stop-hook/last-green-head`.
 
    Turns that only answer questions or edit specs stay fast, and a commit made during the turn

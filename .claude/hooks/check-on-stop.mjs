@@ -10,7 +10,12 @@ import path from "node:path";
 
 const MAX_ATTEMPTS = 3;
 const TAIL_LINES = 80;
-const NON_CODE_DIRS = ["specs/", "docs/", ".specify/"];
+const NON_CODE_DIRS = ["specs/", "docs/", ".specify/", ".claude/"];
+
+// Markdown anywhere (README.md, CLAUDE.md) and the non-code folders can't affect typecheck or tests.
+function isNonCode(file) {
+  return file.endsWith(".md") || NON_CODE_DIRS.some((dir) => file.startsWith(dir));
+}
 
 const projectDir = path.resolve(process.env.CLAUDE_PROJECT_DIR ?? process.cwd());
 const stateDir = path.join(os.tmpdir(), "fridgeit-stop-hook");
@@ -43,7 +48,7 @@ const changedCode = status.stdout
   .split(/\r?\n/)
   .filter(Boolean)
   .map((line) => line.slice(3).split(" -> ").pop().replace(/^"|"$/g, ""))
-  .some((file) => !NON_CODE_DIRS.some((dir) => file.startsWith(dir)));
+  .some((file) => !isNonCode(file));
 const head = sh("git", ["rev-parse", "HEAD"]).stdout.trim();
 
 if (!changedCode && head !== "" && head === readText(lastGreenFile)) process.exit(0);
