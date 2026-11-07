@@ -22,14 +22,16 @@ the banner (US2) and the build profiles (US5).
 
 *Last updated 2026-11-07. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–6 (T001–T040) are done. The draft PR is
+**Status**: Phases 1–7 (T001–T043) are done. The draft PR is
 [#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`). The phase commits are
 `051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4), `3628d06`
-(Phase 5) and the `build(001): add EAS project config and development/preview/production profiles`
-commit (Phase 6). Phases 1–5 are pushed; Phase 6 is committed locally but **not pushed** yet.
+(Phase 5), `2fcc1d3` (Phase 6) and the `ci(001): build or publish preview on merge based on native
+fingerprint` commit (Phase 7). Phases 1–6 are pushed; Phase 7 is committed locally but **not
+pushed** yet.
 
-**Next**: Phase 7, starting with T041 (`.eas/workflows/preview.yml`). T042 is a **(developer)**
-step: install the Expo GitHub app and connect the repo on expo.dev.
+**Next**: Phase 8, starting with T044 (docs) and T045 (roadmap "In review"). The preview workflow
+first runs when PR #1 merges (T049); the Expo GitHub app is installed and `kka2020/fridgeit` is
+connected to the EAS project (T042, done by the developer on 2026-11-07).
 
 **EAS project (Phase 6)**: owner `kka2026`, project ID `fe71867f-0c35-4757-9e27-f6c3731c52d2`. The
 developer's environment has `EXPO_TOKEN` set, so EAS CLI authenticates with it (no `eas login`).
@@ -314,15 +316,15 @@ fingerprint changed, with no manual step.
 **Independent test**: quickstart V7 (a text change reaches the phone) and V8 (a native change
 builds instead of publishing).
 
-- [ ] T041 [US1] Create `.eas/workflows/preview.yml` exactly as in contracts/pipelines.md:
+- [x] T041 [US1] Create `.eas/workflows/preview.yml` exactly as in contracts/pipelines.md:
   - Trigger: `on.push.branches: ['main']`.
   - Jobs:
     - `fingerprint` (`environment: preview`)
     - `get_build` (`platform: android`, `profile: preview`, `fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}`, `wait_for_in_progress: true`)
     - `build`, which runs `if: ${{ !needs.get_build.outputs.build_id }}` (`platform: android`, `profile: preview`)
     - `update`, which runs `if: ${{ needs.get_build.outputs.build_id }}` (`platform: android`, `channel: preview`, `message: ${{ github.commit_message }}`)
-- [ ] T042 [US1] **(developer)** On expo.dev → project → GitHub, install the Expo GitHub app and connect `kka2020/fridgeit` (research R4).
-- [ ] T043 [US1] Commit: `ci(001): build or publish preview on merge based on native fingerprint`.
+- [x] T042 [US1] **(developer)** On expo.dev → project → GitHub, install the Expo GitHub app and connect `kka2020/fridgeit` (research R4).
+- [x] T043 [US1] Commit: `ci(001): build or publish preview on merge based on native fingerprint`.
 
 **Checkpoint**: the pipeline is ready; it first runs when the 001 PR merges (Phase 8).
 

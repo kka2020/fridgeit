@@ -1,0 +1,41 @@
+# On every merge to main: if a preview build with the same native fingerprint exists, publish an
+# OTA update to the preview channel; otherwise build a new preview APK. Exactly one of `build`
+# and `update` runs (FR-009, FR-009a; contracts/pipelines.md).
+name: Preview
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  fingerprint:
+    type: fingerprint
+    environment: preview
+
+  get_build:
+    type: get-build
+    needs: [fingerprint]
+    params:
+      platform: android
+      profile: preview
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      wait_for_in_progress: true
+
+  build:
+    type: build
+    needs: [get_build]
+    if: ${{ !needs.get_build.outputs.build_id }}
+    params:
+      platform: android
+      profile: preview
+
+  update:
+    type: update
+    needs: [get_build]
+    if: ${{ needs.get_build.outputs.build_id }}
+    # The update job defaults to the production environment; match the preview build profile.
+    environment: preview
+    params:
+      platform: android
+      channel: preview
+      message: ${{ github.commit_message }}

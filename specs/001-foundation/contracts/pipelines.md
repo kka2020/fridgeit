@@ -73,7 +73,7 @@ implemented.
 | `fingerprint` | `fingerprint` | none | none | `environment: preview` |
 | `get_build` | `get-build` | `fingerprint` | none | `platform: android`, `profile: preview`, `fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}`, `wait_for_in_progress: true` |
 | `build` | `build` | `get_build` | `${{ !needs.get_build.outputs.build_id }}` | `platform: android`, `profile: preview` |
-| `update` | `update` | `get_build` | `${{ needs.get_build.outputs.build_id }}` | `platform: android`, `channel: preview`, `message: ${{ github.commit_message }}` |
+| `update` | `update` | `get_build` | `${{ needs.get_build.outputs.build_id }}` | `environment: preview`, `platform: android`, `channel: preview`, `message: ${{ github.commit_message }}` |
 
 - **Trigger**: `on: push: branches: ['main']`.
 - **Invariant**: exactly one of `build` and `update` runs per merge.
