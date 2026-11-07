@@ -49,11 +49,11 @@ T039 was verified with an adb screenshot and a uiautomator dump rather than Expo
 - `npx expo install --fix` moved six Expo packages to the latest SDK 57 patch releases
   (`expo-doctor` now passes 21/21).
 
-Deferred (not bugs; for the developer or a later feature):
-- `check-on-stop.mjs` treats `README.md`, `CLAUDE.md` and `.claude/` changes as code, so a turn
-  that only edits those still runs typecheck and tests. Widening the skip list was blocked by the
-  agent's permission classifier, because it loosens the agent's own guardrail: the developer
-  decides.
+- `check-on-stop.mjs` treated `README.md`, `CLAUDE.md` and `.claude/` changes as code. At the
+  developer's request it now also skips Markdown files and `.claude/` (the permission classifier
+  blocked the agent from loosening its own guardrail unasked).
+
+Deferred, and recorded under "Follow-ups" in `docs/roadmap.md`:
 - `update-banner.tsx` and `src/app/index.tsx` each hand-build a light/dark palette instead of
   sharing theme tokens, and the dark screen background doesn't match the navigation DarkTheme.
   Revisit with the first real screens (002).
