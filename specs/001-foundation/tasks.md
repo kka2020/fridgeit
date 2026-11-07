@@ -22,23 +22,47 @@ the banner (US2) and the build profiles (US5).
 
 *Last updated 2026-11-07. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–7 (T001–T043) are done. The draft PR is
+**Status**: Phases 1–7 (T001–T043) and Phase 8's T044–T048 commits are done. The PR is
 [#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`). The phase commits are
 `051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4), `3628d06`
-(Phase 5), `2fcc1d3` (Phase 6) and the `ci(001): build or publish preview on merge based on native
-fingerprint` commit (Phase 7). Phases 1–6 are pushed; Phase 7 is committed locally but **not
-pushed** yet.
+(Phase 5), `2fcc1d3` (Phase 6) and `50aaf75` (Phase 7), all pushed. Phase 8 added three commits:
+the review fixes, the Expo patch updates and the docs (T048).
 
-**Next**: Phase 8, starting with T044 (docs) and T045 (roadmap "In review"). The preview workflow
-first runs when PR #1 merges (T049); the Expo GitHub app is installed and `kka2020/fridgeit` is
-connected to the EAS project (T042, done by the developer on 2026-11-07).
+**Next**: finish T048 (push, mark PR #1 ready, update its body), then T049: the developer merges
+the PR, and the preview workflow runs for the first time (it should run `build` and skip
+`update`). The Expo GitHub app is installed and `kka2020/fridgeit` is connected to the EAS
+project (T042, done by the developer on 2026-11-07).
 
 **EAS project (Phase 6)**: owner `kka2026`, project ID `fe71867f-0c35-4757-9e27-f6c3731c52d2`. The
 developer's environment has `EXPO_TOKEN` set, so EAS CLI authenticates with it (no `eas login`).
 T039 was verified with an adb screenshot and a uiautomator dump rather than Expo MCP.
 
 **Open Phase 5 review nit**: nothing tests the real `expoUpdatesAdapter`'s error swallowing (FR-007
-"never throws"). The contract doesn't require it; the hook also swallows rejections.
+"never throws"). The contract doesn't require it; the provider also swallows rejections.
+
+**T047 `/code-review` (2026-11-07)**: no crash-level bugs. Fixed in the T048 commit:
+- The foreground update check moved from `useUpdateBanner` into `UpdatesProvider`, so there's
+  one `AppState` subscription however many components use the banner, and an in-flight guard
+  stops a second check while one is running (two new tests; contract updated).
+- `check-on-stop.mjs` only saves `last-green-head` when the tree has no code changes, and reports
+  a spawn error instead of `null` output.
+- `npx expo install --fix` moved six Expo packages to the latest SDK 57 patch releases
+  (`expo-doctor` now passes 21/21).
+
+Deferred (not bugs; for the developer or a later feature):
+- `check-on-stop.mjs` treats `README.md`, `CLAUDE.md` and `.claude/` changes as code, so a turn
+  that only edits those still runs typecheck and tests. Widening the skip list was blocked by the
+  agent's permission classifier, because it loosens the agent's own guardrail: the developer
+  decides.
+- `update-banner.tsx` and `src/app/index.tsx` each hand-build a light/dark palette instead of
+  sharing theme tokens, and the dark screen background doesn't match the navigation DarkTheme.
+  Revisit with the first real screens (002).
+- `eslint-plugin-prettier` makes lint report formatting too, duplicating `format:check` and
+  formatting each edit twice in the format hook.
+- The preview workflow doesn't wait for the GitHub `check` job; the `main` ruleset (T050)
+  requiring `check` before merge is what gates it.
+- The SafeAreaProvider test wrapper is copied in two test files; extract a helper when the next
+  screen test needs it.
 
 **Local Android setup (done 2026-11-07)**: `ANDROID_HOME`, `platform-tools` and `emulator` are on
 the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PATH), and the AVD is
@@ -334,13 +358,13 @@ builds instead of publishing).
 
 **Purpose**: the FR-022 docs, the PR, branch protection and the end-to-end proof.
 
-- [ ] T044 [P] Finish updating `CLAUDE.md` and `README.md`. The npm scripts, the hooks, `.claude/hooks/` and the CI workflow were added after Phase 3; add what's still missing:
+- [x] T044 [P] Finish updating `CLAUDE.md` and `README.md`. The npm scripts, the hooks, `.claude/hooks/` and the CI workflow were added after Phase 3; add what's still missing:
   - **Commands section:** the EAS commands (`npx eas-cli@latest build --profile <p>`, `update --channel production`), and confirm `npm run e2e` is described as release build plus Maestro.
   - **Architecture section:** `src/platform/updates/`, `src/components/`, the EAS workflow in `.eas/workflows/`, and screen tests in `__tests__/app/`.
   - **README:** the release flow (merge → preview update or build).
-- [ ] T045 [P] Update `docs/roadmap.md`: set 001's status to "In review" (FR-022; it becomes "Done" in T051).
-- [ ] T046 Run the full local check (`npm run typecheck; npm run lint; npm run format:check; npm test`) plus `npx expo-doctor`, and confirm no `expo-updates` import exists outside `src/platform/updates/expo-updates-adapter.ts` (grep).
-- [ ] T047 Run `/code-review` on the branch against `main` (constitution, Development Workflow). Fix what it finds, then rerun the T046 checks if anything changed.
+- [x] T045 [P] Update `docs/roadmap.md`: set 001's status to "In review" (FR-022; it becomes "Done" in T051).
+- [x] T046 Run the full local check (`npm run typecheck; npm run lint; npm run format:check; npm test`) plus `npx expo-doctor`, and confirm no `expo-updates` import exists outside `src/platform/updates/expo-updates-adapter.ts` (grep).
+- [x] T047 Run `/code-review` on the branch against `main` (constitution, Development Workflow). Fix what it finds, then rerun the T046 checks if anything changed.
 - [ ] T048 Commit: `docs(001): update CLAUDE.md commands/architecture and mark 001 in review`. Push, and mark the PR ready for review. In the PR body, tick **Native runtime changed (needs a new build)**, link `specs/001-foundation/`, and attach the emulator screenshots.
 - [ ] T049 **(developer)** Merge the PR once `check` is green. On expo.dev → Workflows, confirm `preview.yml` ran `build` and skipped `update` (there's no build yet). Install the APK on the phone from the build's install link.
 - [ ] T050 Create the `main` ruleset from contracts/pipelines.md (require a PR with 0 approvals, require the `check` status with an up-to-date branch, block force pushes, restrict deletions, Repository admin bypass). Use `gh api repos/kka2020/fridgeit/rulesets` with the developer's confirmation, or the developer does it in the GitHub UI. Verify with quickstart V2.

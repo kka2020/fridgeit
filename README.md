@@ -29,6 +29,17 @@ npm run e2e            # Maestro flows; needs a release build on the emulator
 The same checks run on every pull request (`.github/workflows/check.yml`), and a failing check
 blocks merging.
 
+## Releases
+
+- **Preview, automatic:** every merge to `main` runs the EAS workflow in
+  `.eas/workflows/preview.yml`. If the change is JavaScript only, it publishes an over-the-air
+  update to the `preview` channel, and installed preview apps show an "Update ready" banner. If the
+  change alters the native code (a new native module, native config in `app.json`, an SDK upgrade),
+  it builds a new preview APK instead, which must be installed.
+- **Production, manual:** build with
+  `npx eas-cli@latest build --platform android --profile production`, and promote a tested preview
+  update with `npx eas-cli@latest update:republish --group <id> --destination-channel production`.
+
 ## How the project works
 
 - Features are built with [Spec Kit](https://github.com/github/spec-kit), one branch per
