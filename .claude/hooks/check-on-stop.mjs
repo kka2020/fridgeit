@@ -55,12 +55,18 @@ mkdirSync(stateDir, { recursive: true });
 
 if (typecheck.status === 0 && tests.status === 0) {
   rmSync(stateFile, { force: true });
-  if (head !== "") writeFileSync(lastGreenFile, head);
+  // Only a tree with no code changes proves HEAD itself is green: otherwise the uncommitted
+  // edits may be what made the checks pass.
+  if (head !== "" && !changedCode) writeFileSync(lastGreenFile, head);
   process.exit(0);
 }
 
 const failed = tests ?? typecheck;
-const output = tail(`${failed.stdout}\n${failed.stderr}`, TAIL_LINES);
+// stdout and stderr are null when npm couldn't be started (ENOENT, timeout, output over maxBuffer).
+const output =
+  failed.error !== undefined
+    ? `Could not run the check: ${failed.error.message}`
+    : tail(`${failed.stdout ?? ""}\n${failed.stderr ?? ""}`, TAIL_LINES);
 
 let attempts = 0;
 if (input.stop_hook_active === true) {

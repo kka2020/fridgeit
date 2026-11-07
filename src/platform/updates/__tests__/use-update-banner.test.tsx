@@ -50,18 +50,21 @@ function createFakeAdapter(
   };
 }
 
-let appStateListener: ((state: AppStateStatus) => void) | undefined;
+let appStateListeners: ((state: AppStateStatus) => void)[] = [];
 let addEventListenerSpy: jest.SpyInstance;
 
 beforeEach(() => {
-  appStateListener = undefined;
+  appStateListeners = [];
   addEventListenerSpy = jest
     .spyOn(AppState, "addEventListener")
     .mockImplementation((type, listener) => {
-      if (type === "change") {
-        appStateListener = listener;
-      }
-      return { remove: jest.fn() };
+      if (type !== "change") return { remove: jest.fn() };
+      appStateListeners.push(listener);
+      return {
+        remove: jest.fn(() => {
+          appStateListeners = appStateListeners.filter((l) => l !== listener);
+        }),
+      };
     });
 });
 
@@ -79,9 +82,9 @@ async function renderBanner(adapter: UpdatesAdapter) {
 }
 
 async function goToForeground() {
-  expect(appStateListener).toBeDefined();
+  expect(appStateListeners.length).toBeGreaterThan(0);
   await act(async () => {
-    appStateListener?.("active");
+    appStateListeners.forEach((listener) => listener("active"));
   });
 }
 
@@ -205,6 +208,47 @@ describe("useUpdateBanner", () => {
     await goToForeground();
 
     expect(adapter.checkAndFetch).not.toHaveBeenCalled();
+  });
+
+  it("checks once when two components use the banner and the app returns to the foreground", async () => {
+    const adapter = createFakeAdapter({ status: { lastCheckedAt: undefined } });
+    function Probe() {
+      useUpdateBanner();
+      return null;
+    }
+    await render(
+      <UpdatesProvider adapter={adapter} now={now}>
+        <Probe />
+        <Probe />
+      </UpdatesProvider>,
+    );
+
+    await goToForeground();
+
+    expect(adapter.checkAndFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't start a second check while one is still running", async () => {
+    const adapter = createFakeAdapter({ status: { lastCheckedAt: undefined } });
+    let finishCheck: () => void = () => {};
+    adapter.checkAndFetch.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishCheck = resolve;
+        }),
+    );
+    await renderBanner(adapter);
+
+    await goToForeground();
+    await goToForeground();
+    expect(adapter.checkAndFetch).toHaveBeenCalledTimes(1);
+
+    // Once it settles (lastCheckedAt still unknown), the next foreground may check again.
+    await act(async () => {
+      finishCheck();
+    });
+    await goToForeground();
+    expect(adapter.checkAndFetch).toHaveBeenCalledTimes(2);
   });
 
   it("never checks when updates are disabled", async () => {

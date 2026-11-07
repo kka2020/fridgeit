@@ -67,6 +67,13 @@ export function UpdatesProvider(props: {
 
 The provider also holds the session's `dismissed` flag, so it survives screen remounts.
 
+The provider owns the foreground check, so there is one `AppState` subscription however many
+components use the banner. On each change to `active`, if `adapter.isEnabled`, no check started
+by the provider is still running, and `shouldCheckForUpdate(status.lastCheckedAt, now())` returns
+true, it calls `adapter.checkAndFetch()`. It doesn't check on mount; the cold-start check belongs
+to `expo-updates` (`ON_LOAD`). The in-flight guard matters because `lastCheckedAt` only changes
+when a check finishes.
+
 ## `src/platform/updates/use-update-banner.ts`
 
 ```ts
@@ -77,10 +84,7 @@ export function useUpdateBanner(): {
 };
 ```
 
-Side effect: subscribes to `AppState`. On each change to `active`, if `adapter.isEnabled` and
-`shouldCheckForUpdate(status.lastCheckedAt, now())` returns true, it calls
-`adapter.checkAndFetch()`. It doesn't check on mount; the cold-start check belongs to
-`expo-updates` (`ON_LOAD`).
+The hook has no side effects of its own; the foreground check runs in `UpdatesProvider`.
 
 **Required test cases** (`__tests__/use-update-banner.test.tsx`, with a fake adapter):
 
@@ -93,6 +97,8 @@ Side effect: subscribes to `AppState`. On each change to `active`, if `adapter.i
 | App returns to the foreground, last check ≥ 15 min ago | `checkAndFetch` is called once |
 | App returns to the foreground, last check < 15 min ago | `checkAndFetch` isn't called |
 | `isEnabled` is false | `checkAndFetch` is never called |
+| Two components use the banner, app returns to the foreground | `checkAndFetch` is called once |
+| App returns to the foreground again while a check is still running | no second `checkAndFetch` until the first settles |
 | `checkAndFetch` fails | no throw; `visible` is unchanged |
 
 ## `src/components/update-banner.tsx`

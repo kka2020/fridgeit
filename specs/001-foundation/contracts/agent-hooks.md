@@ -77,7 +77,8 @@ Windows shell quoting.
 3. The state file is `<os.tmpdir()>/fridgeit-stop-hook/<session_id>.json` with
    `{ "attempts": n }`:
    - If `stop_hook_active` is `false`, this is a new turn, so reset `attempts` to 0.
-   - On success, delete the file, save `HEAD` to `last-green-head`, and exit 0.
+   - On success, delete the file and exit 0. Save `HEAD` to `last-green-head` only if there are
+     no uncommitted code changes, since those may be what made the checks pass.
    - On failure, increment `attempts`.
 
 **Output**:
