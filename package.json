@@ -58,7 +58,6 @@
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/.maestro/"
-    ],
-    "passWithNoTests": true
+    ]
   }
 }

@@ -20,28 +20,45 @@ the banner (US2) and the build profiles (US5).
 
 ## Progress and handover
 
-*Last updated 2026-10-27. Update this section whenever a phase is committed.*
+*Last updated 2026-11-07. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–3 (T001–T018) are done and pushed. The draft PR is
+**Status**: Phases 1–4 (T001–T026) are done. The draft PR is
 [#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`), and its `check` job
-passes. The phase commits are `051bb94` (Phase 1), `fc8d59b` (Phase 2) and `1f88799` (Phase 3).
+passes. The phase commits are `051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3) and
+the `feat(001): replace starter template with My food placeholder screen` commit (Phase 4). Phase 4
+is committed locally but **not pushed** yet.
 
-**Next**: Phase 4, starting with T019 (test first). Before T025, ask the developer to confirm the
-Android emulator is running and that `adb` and `maestro` are on PATH (quickstart prerequisites).
-They haven't confirmed this yet.
+**Next**: Phase 5, starting with T027–T029 (test first).
+
+**Local Android setup (done 2026-11-07)**: `ANDROID_HOME`, `platform-tools` and `emulator` are on
+the user PATH, Maestro 2.12.1 is in `%USERPROFILE%\.maestro\maestro\bin` (on PATH), and the AVD is
+`Medium_Phone_API_35` (Android 15). Start it with `emulator -avd Medium_Phone_API_35`.
 
 **Things to know before continuing**:
+- **Orchestration (from Phase 4):** the main session orchestrates each phase. Fresh subagents
+  write the failing tests, then other fresh subagents implement against them, with `[P]` tasks
+  in parallel. The main session then runs the full check. Before each phase commit, a fresh
+  read-only `phase-reviewer` (`.claude/agents/phase-reviewer.md`) reviews the phase diff, with
+  at most 2 review rounds. The `Stop` hook doesn't gate subagents, so the orchestrator runs the
+  checks itself. The plan is in `~/.claude/plans/plan-how-we-can-radiant-journal.md`.
 - **The agent hooks are live.** After every Edit or Write, `format-and-lint.mjs` reformats the
   file and reports ESLint errors *and warnings*. Before hand-over, `check-on-stop.mjs` runs
   typecheck and tests. Re-read a file after an edit if the hook may have reformatted it.
-- **`passWithNoTests: true`** is set in the jest block of `package.json` only until the first
-  test exists. T026 removes it.
+- **Local release builds:**
+  - `npx expo run:android --variant release --device Medium_Phone_API_35`. `--device` takes the
+    AVD name, not the adb serial (`emulator-5554`).
+  - The first build takes about 9 minutes.
+  - With the template's Gradle limits (`-Xmx2048m -XX:MaxMetaspaceSize=512m`) the build failed
+    with `Metaspace` in `:expo-updates:kspReleaseKotlin` and `lintVitalAnalyzeRelease`. The fix is
+    in the developer's `~/.gradle/gradle.properties` (`-Xmx4096m -XX:MaxMetaspaceSize=1024m`),
+    not in the generated `android/` folder.
+  - Prebuild rewrites the `android` and `ios` npm scripts to `expo run:*`. Revert that if it
+    happens.
 - **React Native Testing Library 14:** `render` is async, so tests use `await render(...)`.
   `npm install` prints a peer warning (`test-renderer` wants React ^19.3; the app has 19.2.3).
   A smoke test showed it works, so ignore it unless tests break.
 - **`expo-router` 57 depends on `@expo/ui`, `expo-glass-effect` and `expo-symbols`**, so they're
   still in `node_modules`. The app must not import them; see plan.md.
-- **T024:** `scripts/reset-project.js` doesn't exist. Confirm that and tick the task.
 - **Pushing:** ask the developer before pushing or changing PR #1. The PR description lists the
   phases done so far; refresh it when the PR is marked ready (T048).
 - **Open `/speckit-analyze` findings** (none block implementation):
@@ -167,24 +184,24 @@ and V5 (`npm run e2e`).
 
 ### Tests for User Story 3 (test first)
 
-- [ ] T019 [P] [US3] Write `__tests__/app/index.test.tsx` (React Native Testing Library): render the default export of `src/app/index.tsx` and assert the text "My food" and "Food tracking is coming soon." (contracts/updates-adapter.md, "My food" section). Run `npm test` and confirm it fails.
-- [ ] T020 [P] [US3] Create `.maestro/launch.yaml` exactly as in contracts/pipelines.md (`appId: com.kavinkodikara.fridgeit`, `launchApp` with `clearState: true`, `assertVisible: "My food"`).
+- [x] T019 [P] [US3] Write `__tests__/app/index.test.tsx` (React Native Testing Library): render the default export of `src/app/index.tsx` and assert the text "My food" and "Food tracking is coming soon." (contracts/updates-adapter.md, "My food" section). Run `npm test` and confirm it fails.
+- [x] T020 [P] [US3] Create `.maestro/launch.yaml` exactly as in contracts/pipelines.md (`appId: com.kavinkodikara.fridgeit`, `launchApp` with `clearState: true`, `assertVisible: "My food"`).
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Rewrite `src/app/index.tsx` as the "My food" screen:
+- [x] T021 [US3] Rewrite `src/app/index.tsx` as the "My food" screen:
   - A title "My food" with `accessibilityRole="header"`, and the body text "Food tracking is coming soon."
   - Uses the safe area, and works in light and dark themes (`useColorScheme`).
   - No data and no network.
   - T019 now passes.
-- [ ] T022 [US3] Set the stack screen title in `src/app/_layout.tsx` to "My food" (`<Stack.Screen name="index" options={{ title: "My food" }} />`), with no tabs.
-- [ ] T023 [P] [US3] Delete the unused template assets: `assets/images/expo-badge.png`, `expo-badge-white.png`, `expo-logo.png`, `logo-glow.png`, `react-logo.png`, `react-logo@2x.png`, `react-logo@3x.png`, `tutorial-web.png` and the `assets/images/tabIcons/` folder. Keep the icons, splash, favicon and `assets/expo.icon/`. Grep the repo first to confirm none are referenced.
-- [ ] T024 [P] [US3] Delete `scripts/reset-project.js` (and `scripts/` if it ends up empty).
-- [ ] T025 [US3] Build and run the release variant on the emulator (`npx expo run:android --variant release`). Using Expo MCP screenshots, confirm:
+- [x] T022 [US3] Set the stack screen title in `src/app/_layout.tsx` to "My food" (`<Stack.Screen name="index" options={{ title: "My food" }} />`), with no tabs.
+- [x] T023 [P] [US3] Delete the unused template assets: `assets/images/expo-badge.png`, `expo-badge-white.png`, `expo-logo.png`, `logo-glow.png`, `react-logo.png`, `react-logo@2x.png`, `react-logo@3x.png`, `tutorial-web.png` and the `assets/images/tabIcons/` folder. Keep the icons, splash, favicon and `assets/expo.icon/`. Grep the repo first to confirm none are referenced.
+- [x] T024 [P] [US3] Delete `scripts/reset-project.js` (and `scripts/` if it ends up empty).
+- [x] T025 [US3] Build and run the release variant on the emulator (`npx expo run:android --variant release`). Using Expo MCP screenshots, confirm:
   - "My food" is shown, with no template screens or tabs.
   - In airplane mode, a relaunch still shows it with no error.
   Then run `npm run e2e` and confirm `launch.yaml` passes. **(developer)**: Maestro and `adb` must be on PATH (quickstart prerequisites).
-- [ ] T026 [US3] Remove `passWithNoTests` from the jest block now that T019 exists, and confirm `npm test` still passes. Commit: `feat(001): replace starter template with My food placeholder screen`.
+- [x] T026 [US3] Remove `passWithNoTests` from the jest block now that T019 exists, and confirm `npm test` still passes. Commit: `feat(001): replace starter template with My food placeholder screen`.
 
 **Checkpoint**: Story 3 is done and its end-to-end flow passes.
 
