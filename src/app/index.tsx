@@ -17,7 +17,9 @@ export default function Index() {
       <Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>
         My food
       </Text>
-      <Text style={[styles.body, { color: theme.muted }]}>Food tracking is coming soon.</Text>
+      <Text style={[styles.body, { color: theme.muted }]}>
+        Food tracking is coming soon. Updated over the air!
+      </Text>
     </SafeAreaView>
   );
 }

@@ -20,18 +20,24 @@ the banner (US2) and the build profiles (US5).
 
 ## Progress and handover
 
-*Last updated 2026-11-07. Update this section whenever a phase is committed.*
+*Last updated 2026-11-08. Update this section whenever a phase is committed.*
 
-**Status**: Phases 1–7 (T001–T043) and Phase 8's T044–T048 commits are done. The PR is
-[#1](https://github.com/kka2020/fridgeit/pull/1) (`001-foundation` → `main`). The phase commits are
-`051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e` (Phase 4), `3628d06`
-(Phase 5), `2fcc1d3` (Phase 6) and `50aaf75` (Phase 7), all pushed. Phase 8 added three commits:
-the review fixes, the Expo patch updates and the docs (T048).
+**Status**: T001–T050 are done.
+[PR #1](https://github.com/kka2020/fridgeit/pull/1) merged to `main` on 2026-11-08 (`bdc504c`).
+The phase commits are `051bb94` (Phase 1), `fc8d59b` (Phase 2), `1f88799` (Phase 3), `3ad2b7e`
+(Phase 4), `3628d06` (Phase 5), `2fcc1d3` (Phase 6) and `50aaf75` (Phase 7), plus Phase 8's review
+fixes, Expo patch updates and docs.
+- T049: the first Preview workflow run ran `build` and skipped `update`. The developer installed
+  that preview APK on the phone.
+- T050: the `main` ruleset (id 26795406) is active. Quickstart V2 passed with throwaway PR #2: a
+  type error failed `check` and blocked merging; the fix made it mergeable; PR #2 was closed.
+- T051 is in progress: the done-when PR changes the placeholder text to "Food tracking is coming
+  soon. Updated over the air!" and sets 001 to "Done" in the roadmap (FR-022).
 
-**Next**: finish T048 (push, mark PR #1 ready, update its body), then T049: the developer merges
-the PR, and the preview workflow runs for the first time (it should run `build` and skip
-`update`). The Expo GitHub app is installed and `kka2020/fridgeit` is connected to the EAS
-project (T042, done by the developer on 2026-11-07).
+**Next**: after the done-when PR merges, confirm the Preview workflow ran `update` and skipped
+`build`, and that the phone shows the banner and then the new text after a restart (T051). Then
+the banner check on the phone (T052). Tick T051 and T052 in the first commit of the next branch.
+The Expo GitHub app is installed and `kka2020/fridgeit` is connected to the EAS project (T042).
 
 **EAS project (Phase 6)**: owner `kka2026`, project ID `fe71867f-0c35-4757-9e27-f6c3731c52d2`. The
 developer's environment has `EXPO_TOKEN` set, so EAS CLI authenticates with it (no `eas login`).
@@ -365,9 +371,9 @@ builds instead of publishing).
 - [x] T045 [P] Update `docs/roadmap.md`: set 001's status to "In review" (FR-022; it becomes "Done" in T051).
 - [x] T046 Run the full local check (`npm run typecheck; npm run lint; npm run format:check; npm test`) plus `npx expo-doctor`, and confirm no `expo-updates` import exists outside `src/platform/updates/expo-updates-adapter.ts` (grep).
 - [x] T047 Run `/code-review` on the branch against `main` (constitution, Development Workflow). Fix what it finds, then rerun the T046 checks if anything changed.
-- [ ] T048 Commit: `docs(001): update CLAUDE.md commands/architecture and mark 001 in review`. Push, and mark the PR ready for review. In the PR body, tick **Native runtime changed (needs a new build)**, link `specs/001-foundation/`, and attach the emulator screenshots.
-- [ ] T049 **(developer)** Merge the PR once `check` is green. On expo.dev → Workflows, confirm `preview.yml` ran `build` and skipped `update` (there's no build yet). Install the APK on the phone from the build's install link.
-- [ ] T050 Create the `main` ruleset from contracts/pipelines.md (require a PR with 0 approvals, require the `check` status with an up-to-date branch, block force pushes, restrict deletions, Repository admin bypass). Use `gh api repos/kka2020/fridgeit/rulesets` with the developer's confirmation, or the developer does it in the GitHub UI. Verify with quickstart V2.
+- [x] T048 Commit: `docs(001): update CLAUDE.md commands/architecture and mark 001 in review`. Push, and mark the PR ready for review. In the PR body, tick **Native runtime changed (needs a new build)**, link `specs/001-foundation/`, and attach the emulator screenshots.
+- [x] T049 **(developer)** Merge the PR once `check` is green. On expo.dev → Workflows, confirm `preview.yml` ran `build` and skipped `update` (there's no build yet). Install the APK on the phone from the build's install link.
+- [x] T050 Create the `main` ruleset from contracts/pipelines.md (require a PR with 0 approvals, require the `check` status with an up-to-date branch, block force pushes, restrict deletions, Repository admin bypass). Use `gh api repos/kka2020/fridgeit/rulesets` with the developer's confirmation, or the developer does it in the GitHub UI. Verify with quickstart V2.
 - [ ] T051 **(developer, with the agent)** Done-when run (quickstart V7):
   - On a new branch, change the "My food" placeholder text and set 001's status in `docs/roadmap.md` to "Done" (FR-022), open a PR, and merge it when `check` passes.
   - Confirm the workflow ran `update` and skipped `build`.

@@ -17,6 +17,8 @@ describe("My food screen", () => {
     );
 
     expect(screen.getByRole("header", { name: "My food" })).toBeOnTheScreen();
-    expect(screen.getByText("Food tracking is coming soon.")).toBeOnTheScreen();
+    expect(
+      screen.getByText("Food tracking is coming soon. Updated over the air!"),
+    ).toBeOnTheScreen();
   });
 });
