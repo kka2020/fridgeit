@@ -1,0 +1,5 @@
+appId: com.kavinkodikara.fridgeit
+---
+- launchApp:
+    clearState: true
+- assertVisible: "My food"

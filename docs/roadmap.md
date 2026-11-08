@@ -10,7 +10,7 @@ on top of the previous ones.
 
 | # | Feature | Status |
 |---|---|---|
-| 001 | Foundation and release pipeline | Not started |
+| 001 | Foundation and release pipeline | In review (PR #1) |
 | 002 | Food inventory | Not started |
 | 003 | Smart expiry defaults | Not started |
 | 004 | Expiry notifications | Not started |
@@ -45,6 +45,12 @@ A walking skeleton, so that every later feature ships through a working pipeline
 - Items can be marked "used" or "binned"; the history is kept for later waste stats.
 - Local SQLite (`expo-sqlite` + Drizzle) behind a repository interface, with versioned
   migrations.
+- Follow-ups from the 001 review:
+  - Shared theme tokens: `update-banner.tsx` and the "My food" screen each hand-build a
+    light/dark palette, and the dark screen background doesn't match the navigation DarkTheme.
+    Replace them with one theme module that matches the navigation theme.
+  - A shared test render helper for the SafeAreaProvider wrapper, now copied in two test files.
+    Extract it with the first new screen test.
 
 ## 003: Smart expiry defaults
 A pure-domain rules table (in `src/domain/`) that the user can override.
@@ -72,6 +78,14 @@ A pure-domain rules table (in `src/domain/`) that the user can override.
   of it running on a fixed schedule.
 - It can be snoozed or turned off in Settings.
 
+## Tooling follow-ups
+- Drop `eslint-plugin-prettier` (keep `eslint-config-prettier`). Formatting is already checked
+  by `format:check` and the format hook, so lint reports it twice and each agent edit is
+  formatted twice. It changes a dependency listed in 001's `plan.md`, so do it as a small
+  `chore` PR after 001 merges.
+
 ## Out of scope for now
 Barcode scanning, the iOS build, web and tablet layouts, cloud sync and sharing, waste
-stats.
+stats, and AI meal suggestions from expiring items. The suggestions need the network and an
+AI service, so before they're specified they need a constitution amendment (principle IV) and
+an ADR covering how the AI API key is kept out of the app.

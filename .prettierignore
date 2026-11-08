@@ -1,0 +1,10 @@
+.specify/
+.claude/skills/
+specs/
+docs/
+package-lock.json
+android/
+ios/
+.expo/
+dist/
+node_modules/

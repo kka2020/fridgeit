@@ -1,56 +1,49 @@
-# Welcome to your Expo app 👋
+# FridgeIt
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An Android-first Expo app that tracks the food and meals you have, each with a use-by date. It
+reminds you before things go off and nudges you to log new shopping. It works offline, keeps all
+data on the device, and has no backend or accounts.
 
-## Get started
+**Status:** feature 001 (foundation and release pipeline) is in progress. See
+[docs/roadmap.md](docs/roadmap.md) for the plan and the status of each feature.
 
-1. Install dependencies
+## Setup
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Requires Node 24 and npm.
 
 ```bash
-npm run reset-project
+npm ci
+npx expo run:android   # development build on an emulator or phone
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Checks
 
-### Other setup steps
+```bash
+npm run typecheck      # TypeScript, strict
+npm run lint           # ESLint (expo lint)
+npm run format:check   # Prettier (npm run format to fix)
+npm test               # Jest + React Native Testing Library
+npm run e2e            # Maestro flows; needs a release build on the emulator
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+The same checks run on every pull request (`.github/workflows/check.yml`), and a failing check
+blocks merging.
 
-## Learn more
+## Releases
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Preview, automatic:** every merge to `main` runs the EAS workflow in
+  `.eas/workflows/preview.yml`. If the change is JavaScript only, it publishes an over-the-air
+  update to the `preview` channel, and installed preview apps show an "Update ready" banner. If the
+  change alters the native code (a new native module, native config in `app.json`, an SDK upgrade),
+  it builds a new preview APK instead, which must be installed.
+- **Production, manual:** build with
+  `npx eas-cli@latest build --platform android --profile production`, and promote a tested preview
+  update with `npx eas-cli@latest update:republish --group <id> --destination-channel production`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## How the project works
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Features are built with [Spec Kit](https://github.com/github/spec-kit), one branch per
+  feature. Each feature's spec, plan and task list live in `specs/<branch>/`.
+- The project rules are in [the constitution](.specify/memory/constitution.md), and the stack
+  decisions in [docs/decisions/](docs/decisions/).
+- Instructions for coding agents are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md).

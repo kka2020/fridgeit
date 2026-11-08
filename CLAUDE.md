@@ -8,36 +8,72 @@ It works offline, keeps all data on the device, and has no backend or accounts.
 @.specify/memory/constitution.md
 
 ## How we work (Spec Kit)
+
 - No feature code without an approved `spec.md`, `plan.md` and `tasks.md` in `specs/<branch>/`.
 - The current feature is the folder in `specs/` whose name matches the current git branch,
   e.g. `002-food-inventory`. Read its `spec.md`, `plan.md` and `tasks.md` before changing code.
 - Loop: `/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks` →
   `/speckit-analyze` → `/speckit-implement`. Implement one task phase at a time and commit
   after each.
+- **Where we left off:** the "Progress and handover" section at the top of the current feature's
+  `tasks.md`. Read it first, and update it whenever a phase is committed.
 - Roadmap and feature status: `docs/roadmap.md`.
 - Stack rationale: `docs/decisions/`. Don't reopen recorded decisions; propose a new ADR
   that supersedes them instead.
 
 ## Architecture
+
 - `src/app/`: Expo Router screens and layouts only.
 - `src/domain/`: pure TypeScript (expiry rules, `planNotifications`). No React, React
   Native or Expo imports.
 - `src/data/`: SQLite repositories (`expo-sqlite` + Drizzle). Schema changes go through
   migrations only.
 - `src/platform/`: adapters for notifications and updates, behind interfaces.
+  - `src/platform/updates/`: the `UpdatesAdapter` interface, its `expo-updates` implementation
+    (the only file that may import `expo-updates`), `UpdatesProvider` and the `useUpdateBanner`
+    hook.
+- `src/components/`: shared UI, such as the update banner.
+- Tests sit next to the code in `__tests__/` folders. Screen tests live in `__tests__/app/`
+  (outside `src/app/`, because Expo Router treats every file there as a route).
+- `.maestro/`: Maestro end-to-end flows, one per user-facing feature.
 - Notifications are derived state: `reconcileNotifications()` rebuilds them from the
   database.
+- `.github/workflows/check.yml`: the `check` job (typecheck, lint, format check, tests) on every
+  PR and on pushes to `main`.
+- `.eas/workflows/preview.yml`: on every push to `main`, publishes an OTA update to the `preview`
+  channel if a preview build with the same native fingerprint exists, and builds a new preview APK
+  otherwise.
+- `eas.json`: the `development`, `preview` and `production` build profiles. EAS owner `kka2026`.
+- `.claude/hooks/`: Claude Code hooks, registered in `.claude/settings.json`:
+  - `format-and-lint.mjs` runs after every Edit or Write. It formats the file with Prettier and
+    reports ESLint errors and warnings back to the agent. Re-read a file after editing it if
+    the hook may have reformatted it.
+  - `check-on-stop.mjs` runs typecheck and tests before hand-over. If they fail, it sends the
+    agent back up to 3 times, then hands over with the failures reported.
 
 ## Commands
-- `npx expo install <pkg>`: add a dependency (never `npm install <pkg>`)
-- `npx tsc --noEmit`: typecheck
-- `npx expo lint`: lint
-- `npm test`: tests (added in feature 001)
+
+- `npx expo install <pkg>`: add a dependency (never `npm install <pkg>`). For dev dependencies:
+  `npx expo install <pkg> -- -- --dev` in Git Bash, or `npx expo install <pkg> "--" --dev` in
+  PowerShell.
+- `npm run typecheck`: typecheck (`tsc --noEmit`, strict)
+- `npm run lint`: lint (`expo lint`)
+- `npm run format` / `npm run format:check`: format with Prettier / check formatting
+- `npm test`: Jest tests (`jest-expo` and React Native Testing Library)
+- `npm run e2e`: Maestro flows in `.maestro/`. Needs a release build on the emulator
+  (`npx expo run:android --variant release`), with `adb` and `maestro` on PATH.
+- `npx expo-doctor`: check dependency versions and config
 - `npx expo run:android`: local development build on the emulator or phone
+- `npx eas-cli@latest build --platform android --profile <development|preview|production>`:
+  cloud build (uses EAS build minutes)
+- `npx eas-cli@latest update --channel production`: publish an OTA update to production by hand,
+  or promote a tested preview update with `update:republish --group <id>
+--destination-channel production`. Preview updates are published by the workflow, not by hand.
 - `$env:EXPO_UNSTABLE_MCP_SERVER=1; npx expo start`: dev server with the Expo MCP local
   tools (screenshots, taps, logs)
 
 ## Rules
+
 - Run typecheck, lint and tests before saying a task is done.
 - Ask before adding any dependency that isn't listed in the current feature's `plan.md`.
 - Use conventional commits. Never add `Co-Authored-By`, `Claude-Session` or
