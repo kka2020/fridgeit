@@ -31,26 +31,36 @@ Domain tests are the cheapest place to catch them.
 
 - `src/domain/` MUST be pure TypeScript, with no imports from React, React Native,
   Expo or storage libraries.
-- Platform APIs (notifications, updates, storage) MUST be reached only through adapters or
-  repositories behind interfaces, in `src/platform/` and `src/data/`.
+- Platform APIs (notifications, updates, storage, network) MUST be reached only through adapters
+  or repositories behind interfaces, in `src/platform/` and `src/data/`.
+- Data interfaces MUST be asynchronous and MUST NOT expose where the data lives, so a remote or
+  syncing implementation can be added without changing screens or domain logic.
 - `src/app/` holds only Expo Router screens and layouts. Shared UI goes in
   `src/components/`.
 - Scheduled notifications are derived state. They are rebuilt from the database by a
   single reconcile function, never edited incrementally.
 
-**Rationale:** this keeps the logic testable without a device, and lets iOS, web or sync
-be added later by swapping adapters.
+**Rationale:** this keeps the logic testable without a device, and lets iOS, web, sync or
+network features be added later by adding or swapping adapters.
 
 ### IV. Offline-First & Private
 
-- The app MUST be fully usable with no network connection.
-- The only permitted network traffic is the over-the-air update check and download.
-- No analytics, tracking, crash reporting or third-party SDKs that phone home, unless a
-  constitution amendment allows it.
-- All user data stays on the device.
-- No secrets, keys or credentials are committed to the repository.
+- Tracking food and receiving expiry and shopping reminders MUST work fully with no network
+  connection. Network features add to these and MUST NOT become a requirement for them.
+- The over-the-air update check and download are always permitted. Any other network traffic
+  MUST be declared by an approved feature spec, so no build makes calls that a spec doesn't cover.
+- A spec with network traffic MUST state what data leaves the device, where it goes, why, and what
+  the user sees when offline or when the service fails. Its plan MUST test those offline and
+  failure paths.
+- User data stays on the device by default. It MAY leave only as the spec declares, and only after
+  the user has opted in or taken a clear action that sends it.
+- No analytics, tracking or crash reporting, and no third-party SDKs that send data beyond what a
+  spec declares, unless a constitution amendment allows it.
+- No secrets, keys or credentials are committed to the repository or shipped in the app. A
+  service that needs a secret MUST be reached through a backend that holds it.
 
-**Rationale:** it's a personal food list, so there's no reason for it to leave the phone.
+**Rationale:** it's a personal food list, so the core must never depend on a server. Network
+features are welcome when they earn their place and the user can see what leaves the phone.
 
 ### V. Small, Reversible Changes
 
@@ -74,12 +84,16 @@ be added later by swapping adapters.
 - Status (fresh, expiring soon, expired) MUST NOT be conveyed by colour alone.
 - Choose the simplest design that meets the spec (YAGNI). Any added complexity MUST be
   justified in `plan.md`.
+- Don't build for a future feature before its spec exists. The exception is a small cost now that
+  avoids a later non-additive migration or loss of user data; record it under Complexity Tracking.
 
 **Rationale:** if logging food is tedious, people stop doing it and the app fails.
 
 ### VII. Release Safety
 
-- Every merge to `main` publishes an OTA update to the `preview` channel.
+- Every merge to `main` that changes more than Markdown files publishes an OTA update to the
+  `preview` channel, or starts a new build if the native runtime changed. A Markdown-only merge
+  publishes nothing.
 - `production` is promoted manually.
 - Changes that alter the native runtime fingerprint (new native modules, `app.json`
   native config, SDK upgrades) MUST NOT ship OTA. They require a new build, and the PR
@@ -101,6 +115,9 @@ The stack is fixed by `docs/decisions/0001-tech-stack.md`:
 | Tests | Jest + `jest-expo` + React Native Testing Library, and Maestro |
 
 - Changing the stack requires a new ADR in `docs/decisions/` that supersedes the old one.
+- Adding a backend, accounts or cloud sync requires such an ADR, covering hosting, authentication,
+  secrets, data retention and API compatibility with installed builds. Calling an external API
+  that needs no secret requires only an approved spec and plan.
 - `android/` and `ios/` are generated (Continuous Native Generation) and MUST NOT be edited
   by hand. Configure native behaviour through `app.json` and config plugins.
 - This constitution and the Spec Kit artifacts take precedence over defaults suggested by
@@ -135,4 +152,4 @@ The stack is fixed by `docs/decisions/0001-tech-stack.md`:
   - Any justified deviation MUST be recorded in the feature's `plan.md` under Complexity
     Tracking.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-12 | **Last Amended**: 2026-10-12
+**Version**: 2.0.0 | **Ratified**: 2026-10-12 | **Last Amended**: 2026-11-09

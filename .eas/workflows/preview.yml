@@ -1,11 +1,14 @@
-# On every merge to main: if a preview build with the same native fingerprint exists, publish an
-# OTA update to the preview channel; otherwise build a new preview APK. Exactly one of `build`
-# and `update` runs (FR-009, FR-009a; contracts/pipelines.md).
+# On every merge to main that changes more than Markdown files: if a preview build with the same
+# native fingerprint exists, publish an OTA update to the preview channel; otherwise build a new
+# preview APK. Exactly one of `build` and `update` runs (FR-009, FR-009a; contracts/pipelines.md).
 name: Preview
 
 on:
   push:
     branches: ["main"]
+    paths:
+      - "**"
+      - "!**/*.md"
 
 jobs:
   fingerprint:
