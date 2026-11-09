@@ -91,7 +91,9 @@ features are welcome when they earn their place and the user can see what leaves
 
 ### VII. Release Safety
 
-- Every merge to `main` publishes an OTA update to the `preview` channel.
+- Every merge to `main` that changes more than Markdown files publishes an OTA update to the
+  `preview` channel, or starts a new build if the native runtime changed. A Markdown-only merge
+  publishes nothing.
 - `production` is promoted manually.
 - Changes that alter the native runtime fingerprint (new native modules, `app.json`
   native config, SDK upgrades) MUST NOT ship OTA. They require a new build, and the PR

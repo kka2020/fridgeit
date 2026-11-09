@@ -40,9 +40,9 @@ It works offline, keeps all data on the device, and has no backend or accounts.
   database.
 - `.github/workflows/check.yml`: the `check` job (typecheck, lint, format check, tests) on every
   PR and on pushes to `main`.
-- `.eas/workflows/preview.yml`: on every push to `main`, publishes an OTA update to the `preview`
-  channel if a preview build with the same native fingerprint exists, and builds a new preview APK
-  otherwise.
+- `.eas/workflows/preview.yml`: on every push to `main` that changes more than Markdown files,
+  publishes an OTA update to the `preview` channel if a preview build with the same native
+  fingerprint exists, and builds a new preview APK otherwise.
 - `eas.json`: the `development`, `preview` and `production` build profiles. EAS owner `kka2026`.
 - `.claude/hooks/`: Claude Code hooks, registered in `.claude/settings.json`:
   - `format-and-lint.mjs` runs after every Edit or Write. It formats the file with Prettier and

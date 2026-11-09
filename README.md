@@ -31,9 +31,10 @@ blocks merging.
 
 ## Releases
 
-- **Preview, automatic:** every merge to `main` runs the EAS workflow in
-  `.eas/workflows/preview.yml`. If the change is JavaScript only, it publishes an over-the-air
-  update to the `preview` channel, and installed preview apps show an "Update ready" banner. If the
+- **Preview, automatic:** every merge to `main` that changes more than Markdown files runs the EAS
+  workflow in `.eas/workflows/preview.yml`. If the change is JavaScript only, it publishes an
+  over-the-air update to the `preview` channel, and installed preview apps show an "Update ready"
+  banner. If the
   change alters the native code (a new native module, native config in `app.json`, an SDK upgrade),
   it builds a new preview APK instead, which must be installed.
 - **Production, manual:** build with
